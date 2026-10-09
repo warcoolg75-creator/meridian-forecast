@@ -1,8 +1,9 @@
 """Shared fixtures.
 
-The suite runs on a temporary SQLite file. If TEST_DATABASE_URL points at PostgreSQL
-the whole suite runs there instead, and the cross-dialect tests compare the two.
-The PostgreSQL database must be disposable: every table in it is dropped first.
+The suite runs on a temporary SQLite file. If TEST_DATABASE_URL (environment or the
+repo-root .env) points at PostgreSQL, the whole suite runs there instead and the
+cross-dialect tests compare the two. This project's tables in that database are
+dropped and recreated, so it must not hold anything you want to keep in them.
 """
 
 import os
@@ -17,10 +18,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from app.config import BACKEND_DIR
+from app.config import BACKEND_DIR, get_settings
 from app.db import create_db_engine, get_db
 from app.main import app
 from app.models import (
+    Base,
     Customer,
     DailySales,
     Product,
@@ -30,8 +32,8 @@ from app.models import (
 )
 from app.seed.generate import wipe_all
 
-PG_URL = os.environ.get("TEST_DATABASE_URL", "")
-HAS_PG = PG_URL.startswith("postgresql")
+PG_URL = os.environ.get("TEST_DATABASE_URL") or get_settings().test_database_url
+HAS_PG = PG_URL.startswith("postgres")
 requires_pg = pytest.mark.skipif(not HAS_PG, reason="TEST_DATABASE_URL is not set to a PostgreSQL database")
 
 
@@ -57,9 +59,12 @@ def pg_engine() -> Iterator[Engine]:
     if not HAS_PG:
         pytest.skip("TEST_DATABASE_URL is not set to a PostgreSQL database")
     engine = create_db_engine(PG_URL)
+    # Drop only this project's tables: hosted Postgres (Neon, Supabase) keeps its own
+    # objects in the public schema, so dropping the schema itself would break it.
     with engine.begin() as connection:
-        connection.execute(sa.text("DROP SCHEMA public CASCADE"))
-        connection.execute(sa.text("CREATE SCHEMA public"))
+        Base.metadata.drop_all(connection)
+        connection.execute(sa.text("DROP TABLE IF EXISTS alembic_version"))
+        connection.execute(sa.text("DROP TABLE IF EXISTS bucket_probe"))
     migrate(engine)
     yield engine
     engine.dispose()

@@ -20,7 +20,7 @@ import math
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -57,6 +57,8 @@ from app.seed.catalog import (
 from app.seed.festivals import HARDCODED_SOURCE, uncovered_hardcoded_years
 from app.seed.ground_truth import (
     CALENDAR_HORIZON_DAYS,
+    DEFAULT_END_DATE,
+    DEFAULT_SEED,
     GROUND_TRUTH_PATH,
     STREAM_ORDERS,
     STREAM_PRODUCTION,
@@ -105,10 +107,6 @@ class SeedReport:
     product_table: pd.DataFrame
     holidays: list[dict]
     warnings: list[str]
-
-
-def utc_yesterday() -> date:
-    return datetime.now(UTC).date() - timedelta(days=1)
 
 
 # --------------------------------------------------------------------------- reference data
@@ -440,10 +438,10 @@ def bulk_insert(session: Session, model: type, rows: list[dict]) -> None:
 # --------------------------------------------------------------------------- entry point
 
 
-def generate(session: Session, *, seed: int = 42, end_date: date | None = None, years: int = 3,
+def generate(session: Session, *, seed: int = DEFAULT_SEED, end_date: date = DEFAULT_END_DATE, years: int = 3,
              ground_truth_path: Path = GROUND_TRUTH_PATH) -> SeedReport:
     started = time.perf_counter()
-    start, end = window_for(end_date or utc_yesterday(), years)
+    start, end = window_for(end_date, years)
     dates = [start + timedelta(days=i) for i in range((end - start).days + 1)]
 
     gt = build_ground_truth(seed, start, end)

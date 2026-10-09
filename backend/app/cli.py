@@ -1,6 +1,6 @@
 """Command-line entry points.
 
-    python -m app.cli seed   [--seed 42] [--end-date YYYY-MM-DD] [--years 3]
+    python -m app.cli seed   [--seed 42] [--end-date 2026-10-08] [--years 3]   (defaults = the pinned dataset)
     python -m app.cli rollup [--date-from YYYY-MM-DD] [--date-to YYYY-MM-DD]
 """
 
@@ -14,6 +14,7 @@ from alembic.config import Config
 from app.config import BACKEND_DIR
 from app.db import get_engine, get_sessionmaker
 from app.seed.generate import format_report, generate
+from app.seed.ground_truth import DEFAULT_END_DATE, DEFAULT_SEED
 from app.services.rollup import rebuild_daily_sales
 
 
@@ -48,9 +49,10 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
 
     seed = commands.add_parser("seed", help="Wipe the database and regenerate all synthetic data")
-    seed.add_argument("--seed", type=int, default=42)
-    seed.add_argument("--end-date", type=date.fromisoformat, default=None,
-                      help="Last day of history (default: yesterday, UTC). Pin it for a frozen dataset.")
+    seed.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    seed.add_argument("--end-date", type=date.fromisoformat, default=DEFAULT_END_DATE,
+                      help=f"Last day of history (default: {DEFAULT_END_DATE}, the pinned dataset whose "
+                           "ground_truth.json is committed). Override only to regenerate deliberately.")
     seed.add_argument("--years", type=int, default=3)
     seed.set_defaults(handler=_seed)
 

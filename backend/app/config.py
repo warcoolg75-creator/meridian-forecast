@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     # PostgreSQL 16 is the target, e.g. postgresql+psycopg://user:pass@localhost:5432/meridian.
     # When DATABASE_URL is unset we fall back to a SQLite file next to the backend.
     database_url: str = DEFAULT_SQLITE_URL
+    # Tests only: a disposable PostgreSQL database for the PG / cross-dialect tests.
+    test_database_url: str = ""
 
 
 @lru_cache

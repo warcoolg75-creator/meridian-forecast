@@ -7,7 +7,16 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import get_settings
 
 
+def normalize_url(url: str) -> str:
+    """Hosted providers hand out postgres:// or postgresql:// URLs; we only ship psycopg 3."""
+    for scheme in ("postgres://", "postgresql://"):
+        if url.startswith(scheme):
+            return "postgresql+psycopg://" + url[len(scheme):]
+    return url
+
+
 def create_db_engine(url: str) -> Engine:
+    url = normalize_url(url)
     if not url.startswith("sqlite"):
         return create_engine(url, pool_pre_ping=True)
 

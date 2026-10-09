@@ -1,16 +1,21 @@
 """Synthetic data generator: determinism, the documented demand design, end-to-end load."""
 
+import re
 from datetime import date, timedelta
 
 import numpy as np
 import pytest
 import sqlalchemy as sa
 
+from app.config import REPO_ROOT
 from app.models import CalendarEvent, DailySales, Inventory, ProductionRun, SalesOrderLine
 from app.seed.catalog import CATEGORIES, CUSTOMERS, WEEKLY_PROFILES
 from app.seed.festivals import HARDCODED_SOURCE, holiday_calendar
 from app.seed.generate import generate
 from app.seed.ground_truth import (
+    DEFAULT_END_DATE,
+    DEFAULT_SEED,
+    GROUND_TRUTH_PATH,
     build_ground_truth,
     expected_cell_demand,
     load_ground_truth,
@@ -18,7 +23,7 @@ from app.seed.ground_truth import (
     write_ground_truth,
 )
 
-END = date(2026, 10, 8)
+END = DEFAULT_END_DATE
 
 
 @pytest.fixture(scope="module")
@@ -35,6 +40,22 @@ def test_ground_truth_is_byte_identical_for_the_same_seed(tmp_path):
     assert first == second == (tmp_path / "b.json").read_bytes()
     assert b"\r\n" not in first
     assert other_seed != first
+
+
+def test_committed_ground_truth_matches_the_pinned_generator(tmp_path):
+    """ground_truth.json in git is what later phases score against. If this fails, the
+    generator (or a pinned dependency) changed: regenerate with `make seed` and commit
+    the new file deliberately - every previous model comparison is then void."""
+    fresh = write_ground_truth(build_ground_truth(DEFAULT_SEED, *window_for(DEFAULT_END_DATE, 3)),
+                               tmp_path / "fresh.json")
+    assert GROUND_TRUTH_PATH.read_bytes() == fresh
+
+
+def test_makefile_defaults_match_the_pinned_dataset():
+    makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    assert re.search(rf"^SEED \?= {DEFAULT_SEED}$", makefile, re.MULTILINE)
+    assert re.search(rf"^END_DATE \?= {DEFAULT_END_DATE.isoformat()}$", makefile, re.MULTILINE)
+    assert "--end-date $(END_DATE)" in makefile
 
 
 def test_window_is_three_full_years_ending_on_the_end_date(gt):

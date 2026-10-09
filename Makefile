@@ -17,23 +17,28 @@ PYTHON := $(VENV)/bin/python
 BOOTSTRAP_PYTHON ?= python3
 endif
 
+# The pinned dataset: backend/app/seed/ground_truth.json in git was generated from these
+# and later phases score models against it. Override only to regenerate on purpose, e.g.
+# `make seed END_DATE=2026-12-31`, and then commit the new ground_truth.json.
+# Must match DEFAULT_SEED / DEFAULT_END_DATE in backend/app/seed/ground_truth.py (a test checks).
 SEED ?= 42
+END_DATE ?= 2026-10-08
 SEED_ARGS ?=
 ROLLUP_ARGS ?=
 PYTEST_ARGS ?=
 
 .PHONY: venv migrate seed rollup test run
 
-venv:  ## create the virtualenv and install the backend with dev extras
+venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
 	"$(PYTHON)" -m pip install --upgrade pip
-	cd backend && "$(PYTHON)" -m pip install -e ".[dev]"
+	cd backend && "$(PYTHON)" -m pip install -e ".[dev,ml]"
 
 migrate:  ## apply Alembic migrations to DATABASE_URL (SQLite file by default)
 	cd backend && "$(PYTHON)" -m alembic upgrade head
 
-seed:  ## wipe and regenerate everything; e.g. make seed SEED_ARGS="--end-date 2026-10-08"
-	cd backend && "$(PYTHON)" -m app.cli seed --seed $(SEED) $(SEED_ARGS)
+seed:  ## wipe and regenerate the pinned dataset (same bytes every run, every day)
+	cd backend && "$(PYTHON)" -m app.cli seed --seed $(SEED) --end-date $(END_DATE) $(SEED_ARGS)
 
 rollup:  ## rebuild daily_sales from order lines; e.g. make rollup ROLLUP_ARGS="--date-from 2026-01-01"
 	cd backend && "$(PYTHON)" -m app.cli rollup $(ROLLUP_ARGS)

@@ -47,6 +47,12 @@ from app.seed.festivals import HOLIDAY_EFFECTS, HOLIDAYS_SOURCE, holiday_calenda
 
 SCHEMA_VERSION = 1
 GROUND_TRUTH_PATH = Path(__file__).resolve().parent / "ground_truth.json"
+
+# The pinned dataset. ground_truth.json in git was generated from exactly these values
+# and later phases score models against it, so the window must not float with the date.
+# Change them only to regenerate deliberately, then commit the new ground_truth.json.
+DEFAULT_SEED = 42
+DEFAULT_END_DATE = date(2026, 10, 8)
 HOLIDAY_LOOKBACK_DAYS = 30  # lead effects (e.g. Diwali -10 days) can reach back into the window
 CALENDAR_HORIZON_DAYS = 182  # holidays are known ahead; keep the next 26 weeks for forecasting
 

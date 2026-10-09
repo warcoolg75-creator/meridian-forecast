@@ -1,0 +1,3352 @@
+{
+  "channel_price_factor": {
+    "direct": 0.88,
+    "distributor": 0.82,
+    "ecommerce": 0.95,
+    "export": 0.85,
+    "retail": 0.9
+  },
+  "city_state": {
+    "IN-DL-NDL": "IN-DL",
+    "IN-GJ-AMD": "IN-GJ",
+    "IN-KA-BLR": "IN-KA",
+    "IN-KL-KOC": "IN-KL",
+    "IN-MH-MUM": "IN-MH",
+    "IN-MH-PUN": "IN-MH",
+    "IN-TG-HYD": "IN-TG",
+    "IN-TN-CHE": "IN-TN",
+    "IN-WB-KOL": "IN-WB"
+  },
+  "customer_channels": {
+    "C01": "distributor",
+    "C02": "distributor",
+    "C03": "distributor",
+    "C04": "distributor",
+    "C05": "distributor",
+    "C06": "distributor",
+    "C07": "distributor",
+    "C08": "distributor",
+    "C09": "retail",
+    "C10": "retail",
+    "C11": "retail",
+    "C12": "retail",
+    "C13": "retail",
+    "C14": "retail",
+    "C15": "retail",
+    "C16": "ecommerce",
+    "C17": "ecommerce",
+    "C18": "ecommerce",
+    "C19": "direct",
+    "C20": "direct",
+    "C21": "direct",
+    "C22": "direct",
+    "C23": "export",
+    "C24": "export",
+    "C25": "export"
+  },
+  "holiday_effects": {
+    "christmas": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.5
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -3,
+          0,
+          1.15
+        ]
+      ]
+    },
+    "dhanteras": {
+      "Kitchen Appliances": [
+        [
+          0,
+          0,
+          2.2
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          0,
+          0,
+          1.3
+        ]
+      ]
+    },
+    "diwali": {
+      "Cooling": [
+        [
+          0,
+          0,
+          0.4
+        ]
+      ],
+      "Industrial Components": [
+        [
+          -1,
+          2,
+          0.15
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          -10,
+          -1,
+          1.3
+        ],
+        [
+          0,
+          0,
+          0.5
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -10,
+          -1,
+          1.8
+        ],
+        [
+          0,
+          0,
+          0.8
+        ]
+      ]
+    },
+    "durga_puja": {
+      "Industrial Components": [
+        [
+          0,
+          2,
+          0.3
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          -3,
+          0,
+          1.3
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -3,
+          1,
+          2.0
+        ]
+      ]
+    },
+    "dussehra": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.3
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          -2,
+          0,
+          1.4
+        ]
+      ]
+    },
+    "eid_al_adha": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.6
+        ]
+      ]
+    },
+    "eid_al_fitr": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.6
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -3,
+          0,
+          1.3
+        ]
+      ]
+    },
+    "gandhi_jayanti": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.3
+        ]
+      ]
+    },
+    "ganesh_chaturthi": {
+      "Packaged Foods": [
+        [
+          -2,
+          0,
+          1.5
+        ]
+      ]
+    },
+    "holi": {
+      "Cooling": [
+        [
+          0,
+          0,
+          0.5
+        ]
+      ],
+      "Industrial Components": [
+        [
+          0,
+          1,
+          0.3
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          0,
+          0,
+          0.5
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -5,
+          -1,
+          1.5
+        ],
+        [
+          0,
+          0,
+          0.4
+        ]
+      ]
+    },
+    "independence_day": {
+      "Cooling": [
+        [
+          0,
+          0,
+          1.1
+        ]
+      ],
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.3
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          0,
+          0,
+          1.1
+        ]
+      ]
+    },
+    "onam": {
+      "Kitchen Appliances": [
+        [
+          -5,
+          0,
+          1.6
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -3,
+          0,
+          1.8
+        ]
+      ]
+    },
+    "other_public": {
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.6
+        ]
+      ]
+    },
+    "pongal": {
+      "Industrial Components": [
+        [
+          0,
+          1,
+          0.4
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          -3,
+          0,
+          1.3
+        ]
+      ],
+      "Packaged Foods": [
+        [
+          -2,
+          0,
+          1.5
+        ]
+      ]
+    },
+    "raksha_bandhan": {
+      "Packaged Foods": [
+        [
+          -4,
+          0,
+          1.6
+        ]
+      ]
+    },
+    "republic_day": {
+      "Cooling": [
+        [
+          0,
+          0,
+          1.1
+        ]
+      ],
+      "Industrial Components": [
+        [
+          0,
+          0,
+          0.3
+        ]
+      ],
+      "Kitchen Appliances": [
+        [
+          0,
+          0,
+          1.1
+        ]
+      ]
+    }
+  },
+  "holidays": [
+    {
+      "date": "2023-09-19",
+      "event_type": "festival",
+      "key": "ganesh_chaturthi",
+      "name": "Ganesh Chaturthi",
+      "region_code": "IN-MH",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2023-09-28",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Milad-un-Nabi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2023-10-02",
+      "event_type": "public_holiday",
+      "key": "gandhi_jayanti",
+      "name": "Mahatma Gandhi's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2023-10-22",
+      "event_type": "festival",
+      "key": "durga_puja",
+      "name": "Durga Puja (Mahashtami)",
+      "region_code": "IN-WB",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2023-10-24",
+      "event_type": "public_holiday",
+      "key": "dussehra",
+      "name": "Dussehra",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2023-11-10",
+      "event_type": "festival",
+      "key": "dhanteras",
+      "name": "Dhanteras",
+      "region_code": null,
+      "source": "hardcoded (UNVERIFIED)"
+    },
+    {
+      "date": "2023-11-12",
+      "event_type": "public_holiday",
+      "key": "diwali",
+      "name": "Diwali (Deepavali)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2023-11-27",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Guru Nanak's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2023-12-25",
+      "event_type": "public_holiday",
+      "key": "christmas",
+      "name": "Christmas",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-01-15",
+      "event_type": "festival",
+      "key": "pongal",
+      "name": "Pongal",
+      "region_code": "IN-TN",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2024-01-26",
+      "event_type": "public_holiday",
+      "key": "republic_day",
+      "name": "Republic Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-03-25",
+      "event_type": "public_holiday",
+      "key": "holi",
+      "name": "Holi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-03-29",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Good Friday",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-04-11",
+      "event_type": "public_holiday",
+      "key": "eid_al_fitr",
+      "name": "Id-ul-Fitr",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-04-14",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Dr. B. R. Ambedkar's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-04-17",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Ram Navami",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-04-21",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Mahavir Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-05-23",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Buddha Purnima",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-06-17",
+      "event_type": "public_holiday",
+      "key": "eid_al_adha",
+      "name": "Id-ul-Zuha (Bakrid)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-07-17",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Muharram",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-08-15",
+      "event_type": "public_holiday",
+      "key": "independence_day",
+      "name": "Independence Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-08-19",
+      "event_type": "festival",
+      "key": "raksha_bandhan",
+      "name": "Raksha Bandhan",
+      "region_code": null,
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2024-08-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Janmashtami (Vaishnava)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-09-07",
+      "event_type": "festival",
+      "key": "ganesh_chaturthi",
+      "name": "Ganesh Chaturthi / Vinayak Chaturthi",
+      "region_code": "IN-MH",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2024-09-15",
+      "event_type": "festival",
+      "key": "onam",
+      "name": "Onam",
+      "region_code": "IN-KL",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2024-09-16",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Milad-un-Nabi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-10-02",
+      "event_type": "public_holiday",
+      "key": "gandhi_jayanti",
+      "name": "Mahatma Gandhi's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-10-11",
+      "event_type": "festival",
+      "key": "durga_puja",
+      "name": "Durga Puja (Mahashtami)",
+      "region_code": "IN-WB",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2024-10-12",
+      "event_type": "public_holiday",
+      "key": "dussehra",
+      "name": "Dussehra",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-10-29",
+      "event_type": "festival",
+      "key": "dhanteras",
+      "name": "Dhanteras",
+      "region_code": null,
+      "source": "hardcoded (UNVERIFIED)"
+    },
+    {
+      "date": "2024-10-31",
+      "event_type": "public_holiday",
+      "key": "diwali",
+      "name": "Diwali (Deepavali)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-11-15",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Guru Nanak's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2024-12-25",
+      "event_type": "public_holiday",
+      "key": "christmas",
+      "name": "Christmas",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-01-14",
+      "event_type": "festival",
+      "key": "pongal",
+      "name": "Pongal",
+      "region_code": "IN-TN",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2025-01-26",
+      "event_type": "public_holiday",
+      "key": "republic_day",
+      "name": "Republic Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-02-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Maha Shivaratri",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-03-14",
+      "event_type": "public_holiday",
+      "key": "holi",
+      "name": "Holi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-03-31",
+      "event_type": "public_holiday",
+      "key": "eid_al_fitr",
+      "name": "Id-ul-Fitr",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-04-10",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Mahavir Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-04-14",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Dr. B. R. Ambedkar's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-04-18",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Good Friday",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-05-12",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Buddha Purnima",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-06-07",
+      "event_type": "public_holiday",
+      "key": "eid_al_adha",
+      "name": "Id-ul-Zuha (Bakrid)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-07-06",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Muharram",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-08-09",
+      "event_type": "festival",
+      "key": "raksha_bandhan",
+      "name": "Raksha Bandhan",
+      "region_code": null,
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2025-08-15",
+      "event_type": "public_holiday",
+      "key": "independence_day",
+      "name": "Independence Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-08-16",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Janmashtami (Vaishnava)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-08-27",
+      "event_type": "festival",
+      "key": "ganesh_chaturthi",
+      "name": "Ganesh Chaturthi / Vinayak Chaturthi",
+      "region_code": "IN-MH",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2025-09-05",
+      "event_type": "festival",
+      "key": "onam",
+      "name": "Onam",
+      "region_code": "IN-KL",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2025-09-05",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Milad-un-Nabi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-09-30",
+      "event_type": "festival",
+      "key": "durga_puja",
+      "name": "Durga Puja (Mahashtami)",
+      "region_code": "IN-WB",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2025-10-02",
+      "event_type": "public_holiday",
+      "key": "dussehra",
+      "name": "Dussehra",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-10-02",
+      "event_type": "public_holiday",
+      "key": "gandhi_jayanti",
+      "name": "Mahatma Gandhi's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-10-18",
+      "event_type": "festival",
+      "key": "dhanteras",
+      "name": "Dhanteras",
+      "region_code": null,
+      "source": "hardcoded (UNVERIFIED)"
+    },
+    {
+      "date": "2025-10-20",
+      "event_type": "public_holiday",
+      "key": "diwali",
+      "name": "Diwali (Deepavali)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-11-05",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Guru Nanak's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2025-12-25",
+      "event_type": "public_holiday",
+      "key": "christmas",
+      "name": "Christmas",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-01-14",
+      "event_type": "festival",
+      "key": "pongal",
+      "name": "Pongal",
+      "region_code": "IN-TN",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2026-01-26",
+      "event_type": "public_holiday",
+      "key": "republic_day",
+      "name": "Republic Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-03-04",
+      "event_type": "public_holiday",
+      "key": "holi",
+      "name": "Holi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-03-21",
+      "event_type": "public_holiday",
+      "key": "eid_al_fitr",
+      "name": "Id-ul-Fitr",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-03-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Ram Navami",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-03-31",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Mahavir Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-04-03",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Good Friday",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-04-14",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Dr. B. R. Ambedkar's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-05-01",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Buddha Purnima",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-05-27",
+      "event_type": "public_holiday",
+      "key": "eid_al_adha",
+      "name": "Id-ul-Zuha (Bakrid)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-06-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Muharram",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-08-15",
+      "event_type": "public_holiday",
+      "key": "independence_day",
+      "name": "Independence Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-08-26",
+      "event_type": "festival",
+      "key": "onam",
+      "name": "Onam",
+      "region_code": "IN-KL",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2026-08-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Milad-un-Nabi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-08-28",
+      "event_type": "festival",
+      "key": "raksha_bandhan",
+      "name": "Raksha Bandhan",
+      "region_code": null,
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2026-09-04",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Janmashtami (Vaishnava)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-09-14",
+      "event_type": "festival",
+      "key": "ganesh_chaturthi",
+      "name": "Ganesh Chaturthi / Vinayak Chaturthi",
+      "region_code": "IN-MH",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2026-10-02",
+      "event_type": "public_holiday",
+      "key": "gandhi_jayanti",
+      "name": "Mahatma Gandhi's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-10-19",
+      "event_type": "festival",
+      "key": "durga_puja",
+      "name": "Durga Puja (Mahashtami)",
+      "region_code": "IN-WB",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2026-10-20",
+      "event_type": "public_holiday",
+      "key": "dussehra",
+      "name": "Dussehra",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-11-06",
+      "event_type": "festival",
+      "key": "dhanteras",
+      "name": "Dhanteras",
+      "region_code": null,
+      "source": "hardcoded (UNVERIFIED)"
+    },
+    {
+      "date": "2026-11-08",
+      "event_type": "public_holiday",
+      "key": "diwali",
+      "name": "Diwali (Deepavali)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-11-24",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Guru Nanak's Jayanti",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2026-12-25",
+      "event_type": "public_holiday",
+      "key": "christmas",
+      "name": "Christmas",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2027-01-15",
+      "event_type": "festival",
+      "key": "pongal",
+      "name": "Pongal",
+      "region_code": "IN-TN",
+      "source": "holidays==0.106 optional"
+    },
+    {
+      "date": "2027-01-26",
+      "event_type": "public_holiday",
+      "key": "republic_day",
+      "name": "Republic Day",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2027-03-06",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Maha Shivaratri",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2027-03-10",
+      "event_type": "public_holiday",
+      "key": "eid_al_fitr",
+      "name": "Id-ul-Fitr (estimated)",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2027-03-22",
+      "event_type": "public_holiday",
+      "key": "holi",
+      "name": "Holi",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    },
+    {
+      "date": "2027-03-26",
+      "event_type": "public_holiday",
+      "key": "other_public",
+      "name": "Good Friday",
+      "region_code": null,
+      "source": "holidays==0.106 public"
+    }
+  ],
+  "holidays_source": "holidays==0.106",
+  "model": "units[p,d,c] ~ Poisson(base_level * trend * weekly * yearly * promo * holiday_national * shock * customer_weight * holiday_regional); see app/seed/ground_truth.py",
+  "products": {
+    "COL-ACL-70": {
+      "base_level": 25,
+      "category": "Cooling",
+      "channel_weights": {
+        "distributor": 0.45,
+        "ecommerce": 0.15,
+        "retail": 0.4
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.018,
+        "C02@IN-MH-PUN": 0.06,
+        "C03@IN-GJ-AMD": 0.126,
+        "C04@IN-DL-NDL": 0.171,
+        "C05@IN-KA-BLR": 0.009,
+        "C06@IN-TN-CHE": 0.0135,
+        "C07@IN-TG-HYD": 0.105,
+        "C08@IN-WB-KOL": 0.009,
+        "C09@IN-DL-NDL": 0.152,
+        "C10@IN-MH-MUM": 0.016,
+        "C11@IN-KA-BLR": 0.008,
+        "C12@IN-TN-CHE": 0.012,
+        "C13@IN-WB-KOL": 0.008,
+        "C14@IN-KL-KOC": 0.007273,
+        "C15@IN-GJ-AMD": 0.112,
+        "C16@IN-DL-NDL": 0.0285,
+        "C16@IN-GJ-AMD": 0.021,
+        "C16@IN-KA-BLR": 0.0015,
+        "C16@IN-KL-KOC": 0.001364,
+        "C16@IN-MH-MUM": 0.003,
+        "C16@IN-MH-PUN": 0.01,
+        "C16@IN-TG-HYD": 0.0175,
+        "C16@IN-TN-CHE": 0.00225,
+        "C16@IN-WB-KOL": 0.0015,
+        "C17@IN-DL-NDL": 0.0171,
+        "C17@IN-GJ-AMD": 0.0126,
+        "C17@IN-KA-BLR": 0.0009,
+        "C17@IN-KL-KOC": 0.000818,
+        "C17@IN-MH-MUM": 0.0018,
+        "C17@IN-MH-PUN": 0.006,
+        "C17@IN-TG-HYD": 0.0105,
+        "C17@IN-TN-CHE": 0.00135,
+        "C17@IN-WB-KOL": 0.0009,
+        "C18@IN-DL-NDL": 0.0114,
+        "C18@IN-GJ-AMD": 0.0084,
+        "C18@IN-KA-BLR": 0.0006,
+        "C18@IN-KL-KOC": 0.000545,
+        "C18@IN-MH-MUM": 0.0012,
+        "C18@IN-MH-PUN": 0.004,
+        "C18@IN-TG-HYD": 0.007,
+        "C18@IN-TN-CHE": 0.0009,
+        "C18@IN-WB-KOL": 0.0006
+      },
+      "launched_on": "2017-02-01",
+      "lifecycle": "mature",
+      "list_price_minor": 999900,
+      "name": "Desert Air Cooler 70L",
+      "promotions": [
+        {
+          "discount_pct": 0.11,
+          "end": "2023-10-24",
+          "lift": 1.54,
+          "start": "2023-10-16"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2023-11-20",
+          "lift": 2.08,
+          "start": "2023-11-14"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-01-26",
+          "lift": 1.8,
+          "start": "2024-01-19"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-04-08",
+          "lift": 1.91,
+          "start": "2024-04-01"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2024-08-11",
+          "lift": 1.89,
+          "start": "2024-08-02"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2024-10-19",
+          "lift": 2.11,
+          "start": "2024-10-13"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2024-11-18",
+          "lift": 1.91,
+          "start": "2024-11-07"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2025-04-02",
+          "lift": 2.1,
+          "start": "2025-03-27"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2025-06-27",
+          "lift": 2.13,
+          "start": "2025-06-22"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2025-09-07",
+          "lift": 2.13,
+          "start": "2025-08-29"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2025-12-27",
+          "lift": 1.5,
+          "start": "2025-12-19"
+        },
+        {
+          "discount_pct": 0.08,
+          "end": "2026-05-22",
+          "lift": 1.54,
+          "start": "2026-05-09"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2026-08-15",
+          "lift": 2.17,
+          "start": "2026-08-08"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2026-09-15",
+          "lift": 2.0,
+          "start": "2026-09-10"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.38,
+        "IN-GJ-AMD": 0.28,
+        "IN-KA-BLR": 0.02,
+        "IN-KL-KOC": 0.01,
+        "IN-MH-MUM": 0.04,
+        "IN-MH-PUN": 0.08,
+        "IN-TG-HYD": 0.14,
+        "IN-TN-CHE": 0.03,
+        "IN-WB-KOL": 0.02
+      },
+      "shocks": [
+        {
+          "end": "2023-10-25",
+          "multiplier": 0.046,
+          "start": "2023-10-20"
+        },
+        {
+          "end": "2024-02-23",
+          "multiplier": 0.049,
+          "start": "2024-02-19"
+        },
+        {
+          "end": "2024-10-25",
+          "multiplier": 0.046,
+          "start": "2024-10-22"
+        },
+        {
+          "end": "2025-01-03",
+          "multiplier": 0.024,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-27",
+          "multiplier": 0.072,
+          "start": "2025-09-24"
+        },
+        {
+          "end": "2026-06-18",
+          "multiplier": 0.072,
+          "start": "2026-06-16"
+        },
+        {
+          "end": "2026-09-08",
+          "multiplier": 0.028,
+          "start": "2026-09-03"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.05,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 4.0,
+          "center": "05-01",
+          "width_days": 40
+        }
+      ]
+    },
+    "COL-CFN-1200": {
+      "base_level": 110,
+      "category": "Cooling",
+      "channel_weights": {
+        "distributor": 0.45,
+        "ecommerce": 0.15,
+        "retail": 0.4
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.045,
+        "C02@IN-MH-PUN": 0.045,
+        "C03@IN-GJ-AMD": 0.036,
+        "C04@IN-DL-NDL": 0.054,
+        "C05@IN-KA-BLR": 0.054,
+        "C06@IN-TN-CHE": 0.09,
+        "C07@IN-TG-HYD": 0.105,
+        "C08@IN-WB-KOL": 0.045,
+        "C09@IN-DL-NDL": 0.048,
+        "C10@IN-MH-MUM": 0.04,
+        "C11@IN-KA-BLR": 0.048,
+        "C12@IN-TN-CHE": 0.08,
+        "C13@IN-WB-KOL": 0.04,
+        "C14@IN-KL-KOC": 0.058182,
+        "C15@IN-GJ-AMD": 0.032,
+        "C16@IN-DL-NDL": 0.009,
+        "C16@IN-GJ-AMD": 0.006,
+        "C16@IN-KA-BLR": 0.009,
+        "C16@IN-KL-KOC": 0.010909,
+        "C16@IN-MH-MUM": 0.0075,
+        "C16@IN-MH-PUN": 0.0075,
+        "C16@IN-TG-HYD": 0.0175,
+        "C16@IN-TN-CHE": 0.015,
+        "C16@IN-WB-KOL": 0.0075,
+        "C17@IN-DL-NDL": 0.0054,
+        "C17@IN-GJ-AMD": 0.0036,
+        "C17@IN-KA-BLR": 0.0054,
+        "C17@IN-KL-KOC": 0.006545,
+        "C17@IN-MH-MUM": 0.0045,
+        "C17@IN-MH-PUN": 0.0045,
+        "C17@IN-TG-HYD": 0.0105,
+        "C17@IN-TN-CHE": 0.009,
+        "C17@IN-WB-KOL": 0.0045,
+        "C18@IN-DL-NDL": 0.0036,
+        "C18@IN-GJ-AMD": 0.0024,
+        "C18@IN-KA-BLR": 0.0036,
+        "C18@IN-KL-KOC": 0.004364,
+        "C18@IN-MH-MUM": 0.003,
+        "C18@IN-MH-PUN": 0.003,
+        "C18@IN-TG-HYD": 0.007,
+        "C18@IN-TN-CHE": 0.006,
+        "C18@IN-WB-KOL": 0.003
+      },
+      "launched_on": "2015-01-10",
+      "lifecycle": "mature",
+      "list_price_minor": 219900,
+      "name": "Ceiling Fan 1200mm",
+      "promotions": [
+        {
+          "discount_pct": 0.17,
+          "end": "2023-10-28",
+          "lift": 1.56,
+          "start": "2023-10-15"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2024-01-05",
+          "lift": 1.69,
+          "start": "2023-12-25"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2024-04-10",
+          "lift": 1.55,
+          "start": "2024-04-02"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-05-22",
+          "lift": 1.98,
+          "start": "2024-05-15"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2024-08-30",
+          "lift": 1.96,
+          "start": "2024-08-20"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2024-12-02",
+          "lift": 1.65,
+          "start": "2024-11-25"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2025-02-27",
+          "lift": 1.81,
+          "start": "2025-02-21"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2025-07-11",
+          "lift": 2.0,
+          "start": "2025-07-07"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2025-11-15",
+          "lift": 1.94,
+          "start": "2025-11-05"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2026-01-16",
+          "lift": 2.07,
+          "start": "2026-01-09"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-03-08",
+          "lift": 2.19,
+          "start": "2026-02-25"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-06-24",
+          "lift": 1.57,
+          "start": "2026-06-12"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.12,
+        "IN-GJ-AMD": 0.08,
+        "IN-KA-BLR": 0.12,
+        "IN-KL-KOC": 0.08,
+        "IN-MH-MUM": 0.1,
+        "IN-MH-PUN": 0.06,
+        "IN-TG-HYD": 0.14,
+        "IN-TN-CHE": 0.2,
+        "IN-WB-KOL": 0.1
+      },
+      "shocks": [
+        {
+          "end": "2024-02-01",
+          "multiplier": 0.077,
+          "start": "2024-01-31"
+        },
+        {
+          "end": "2024-04-18",
+          "multiplier": 0.027,
+          "start": "2024-04-17"
+        },
+        {
+          "end": "2024-05-10",
+          "multiplier": 0.07,
+          "start": "2024-05-09"
+        },
+        {
+          "end": "2024-07-21",
+          "multiplier": 0.025,
+          "start": "2024-07-20"
+        },
+        {
+          "end": "2024-12-31",
+          "multiplier": 0.062,
+          "start": "2024-12-27"
+        },
+        {
+          "end": "2025-02-17",
+          "multiplier": 0.073,
+          "start": "2025-02-12"
+        },
+        {
+          "end": "2025-06-27",
+          "multiplier": 0.031,
+          "start": "2025-06-23"
+        },
+        {
+          "end": "2026-05-18",
+          "multiplier": 0.054,
+          "start": "2026-05-14"
+        },
+        {
+          "end": "2026-06-23",
+          "multiplier": 0.048,
+          "start": "2026-06-20"
+        },
+        {
+          "end": "2026-09-07",
+          "multiplier": 0.071,
+          "start": "2026-09-02"
+        },
+        {
+          "end": "2026-09-24",
+          "multiplier": 0.045,
+          "start": "2026-09-19"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.06,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 0.9,
+          "center": "04-25",
+          "width_days": 45
+        }
+      ]
+    },
+    "COL-TFN-400": {
+      "base_level": 120,
+      "category": "Cooling",
+      "channel_weights": {
+        "distributor": 0.45,
+        "ecommerce": 0.15,
+        "retail": 0.4
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.027,
+        "C02@IN-MH-PUN": 0.0225,
+        "C03@IN-GJ-AMD": 0.0225,
+        "C04@IN-DL-NDL": 0.036,
+        "C05@IN-KA-BLR": 0.018,
+        "C06@IN-TN-CHE": 0.099,
+        "C07@IN-TG-HYD": 0.0525,
+        "C08@IN-WB-KOL": 0.18,
+        "C09@IN-DL-NDL": 0.032,
+        "C10@IN-MH-MUM": 0.024,
+        "C11@IN-KA-BLR": 0.016,
+        "C12@IN-TN-CHE": 0.088,
+        "C13@IN-WB-KOL": 0.16,
+        "C14@IN-KL-KOC": 0.036364,
+        "C15@IN-GJ-AMD": 0.02,
+        "C16@IN-DL-NDL": 0.006,
+        "C16@IN-GJ-AMD": 0.00375,
+        "C16@IN-KA-BLR": 0.003,
+        "C16@IN-KL-KOC": 0.006818,
+        "C16@IN-MH-MUM": 0.0045,
+        "C16@IN-MH-PUN": 0.00375,
+        "C16@IN-TG-HYD": 0.00875,
+        "C16@IN-TN-CHE": 0.0165,
+        "C16@IN-WB-KOL": 0.03,
+        "C17@IN-DL-NDL": 0.0036,
+        "C17@IN-GJ-AMD": 0.00225,
+        "C17@IN-KA-BLR": 0.0018,
+        "C17@IN-KL-KOC": 0.004091,
+        "C17@IN-MH-MUM": 0.0027,
+        "C17@IN-MH-PUN": 0.00225,
+        "C17@IN-TG-HYD": 0.00525,
+        "C17@IN-TN-CHE": 0.0099,
+        "C17@IN-WB-KOL": 0.018,
+        "C18@IN-DL-NDL": 0.0024,
+        "C18@IN-GJ-AMD": 0.0015,
+        "C18@IN-KA-BLR": 0.0012,
+        "C18@IN-KL-KOC": 0.002727,
+        "C18@IN-MH-MUM": 0.0018,
+        "C18@IN-MH-PUN": 0.0015,
+        "C18@IN-TG-HYD": 0.0035,
+        "C18@IN-TN-CHE": 0.0066,
+        "C18@IN-WB-KOL": 0.012
+      },
+      "launched_on": "2012-04-01",
+      "lifecycle": "phase_out",
+      "list_price_minor": 159900,
+      "name": "Table Fan 400mm",
+      "promotions": [
+        {
+          "discount_pct": 0.18,
+          "end": "2023-10-26",
+          "lift": 1.97,
+          "start": "2023-10-19"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2024-03-12",
+          "lift": 1.74,
+          "start": "2024-03-08"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2024-08-27",
+          "lift": 1.47,
+          "start": "2024-08-14"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-12-20",
+          "lift": 1.68,
+          "start": "2024-12-15"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2025-03-12",
+          "lift": 1.43,
+          "start": "2025-03-04"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2025-06-29",
+          "lift": 2.1,
+          "start": "2025-06-19"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2025-12-29",
+          "lift": 2.04,
+          "start": "2025-12-19"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-01-30",
+          "lift": 1.66,
+          "start": "2026-01-25"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-06-10",
+          "lift": 1.62,
+          "start": "2026-06-04"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2026-08-29",
+          "lift": 2.19,
+          "start": "2026-08-16"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2026-09-26",
+          "lift": 1.57,
+          "start": "2026-09-22"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.08,
+        "IN-GJ-AMD": 0.05,
+        "IN-KA-BLR": 0.04,
+        "IN-KL-KOC": 0.05,
+        "IN-MH-MUM": 0.06,
+        "IN-MH-PUN": 0.03,
+        "IN-TG-HYD": 0.07,
+        "IN-TN-CHE": 0.22,
+        "IN-WB-KOL": 0.4
+      },
+      "shocks": [
+        {
+          "end": "2023-11-17",
+          "multiplier": 0.071,
+          "start": "2023-11-14"
+        },
+        {
+          "end": "2024-01-05",
+          "multiplier": 0.038,
+          "start": "2024-01-02"
+        },
+        {
+          "end": "2024-09-12",
+          "multiplier": 0.058,
+          "start": "2024-09-11"
+        },
+        {
+          "end": "2024-12-08",
+          "multiplier": 0.056,
+          "start": "2024-12-03"
+        },
+        {
+          "end": "2025-03-07",
+          "multiplier": 0.026,
+          "start": "2025-03-02"
+        },
+        {
+          "end": "2025-07-29",
+          "multiplier": 0.074,
+          "start": "2025-07-24"
+        },
+        {
+          "end": "2025-09-29",
+          "multiplier": 0.066,
+          "start": "2025-09-24"
+        },
+        {
+          "end": "2025-12-09",
+          "multiplier": 0.075,
+          "start": "2025-12-06"
+        },
+        {
+          "end": "2026-04-30",
+          "multiplier": 0.067,
+          "start": "2026-04-27"
+        },
+        {
+          "end": "2026-05-24",
+          "multiplier": 0.043,
+          "start": "2026-05-22"
+        }
+      ],
+      "trend": {
+        "annual_growth": -0.45,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 1.4,
+          "center": "05-01",
+          "width_days": 40
+        }
+      ]
+    },
+    "FDS-GFB-1KG": {
+      "base_level": 6,
+      "category": "Packaged Foods",
+      "channel_weights": {
+        "direct": 0.25,
+        "distributor": 0.15,
+        "ecommerce": 0.2,
+        "export": 0.05,
+        "retail": 0.35
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.048,
+        "C02@IN-MH-PUN": 0.021429,
+        "C03@IN-GJ-AMD": 0.03,
+        "C04@IN-DL-NDL": 0.063158,
+        "C05@IN-KA-BLR": 0.012857,
+        "C06@IN-TN-CHE": 0.006,
+        "C07@IN-TG-HYD": 0.017143,
+        "C08@IN-WB-KOL": 0.006429,
+        "C09@IN-DL-NDL": 0.147368,
+        "C10@IN-MH-MUM": 0.112,
+        "C11@IN-KA-BLR": 0.03,
+        "C12@IN-TN-CHE": 0.014,
+        "C13@IN-WB-KOL": 0.015,
+        "C14@IN-KL-KOC": 0.006364,
+        "C15@IN-GJ-AMD": 0.07,
+        "C16@IN-DL-NDL": 0.042105,
+        "C16@IN-GJ-AMD": 0.02,
+        "C16@IN-KA-BLR": 0.008571,
+        "C16@IN-KL-KOC": 0.001818,
+        "C16@IN-MH-MUM": 0.032,
+        "C16@IN-MH-PUN": 0.014286,
+        "C16@IN-TG-HYD": 0.011429,
+        "C16@IN-TN-CHE": 0.004,
+        "C16@IN-WB-KOL": 0.004286,
+        "C17@IN-DL-NDL": 0.025263,
+        "C17@IN-GJ-AMD": 0.012,
+        "C17@IN-KA-BLR": 0.005143,
+        "C17@IN-KL-KOC": 0.001091,
+        "C17@IN-MH-MUM": 0.0192,
+        "C17@IN-MH-PUN": 0.008571,
+        "C17@IN-TG-HYD": 0.006857,
+        "C17@IN-TN-CHE": 0.0024,
+        "C17@IN-WB-KOL": 0.002571,
+        "C18@IN-DL-NDL": 0.016842,
+        "C18@IN-GJ-AMD": 0.008,
+        "C18@IN-KA-BLR": 0.003429,
+        "C18@IN-KL-KOC": 0.000727,
+        "C18@IN-MH-MUM": 0.0128,
+        "C18@IN-MH-PUN": 0.005714,
+        "C18@IN-TG-HYD": 0.004571,
+        "C18@IN-TN-CHE": 0.0016,
+        "C18@IN-WB-KOL": 0.001714,
+        "C22@IN-DL-NDL": 0.105263,
+        "C23@IN-MH-MUM": 0.016,
+        "C24@IN-TN-CHE": 0.002
+      },
+      "launched_on": "2019-09-01",
+      "lifecycle": "mature",
+      "list_price_minor": 119900,
+      "name": "Dry Fruit Gift Box 1kg",
+      "promotions": [
+        {
+          "discount_pct": 0.1,
+          "end": "2023-11-28",
+          "lift": 1.42,
+          "start": "2023-11-16"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2024-01-16",
+          "lift": 2.12,
+          "start": "2024-01-04"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-03-26",
+          "lift": 1.8,
+          "start": "2024-03-21"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2024-07-21",
+          "lift": 2.12,
+          "start": "2024-07-12"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2024-11-21",
+          "lift": 2.17,
+          "start": "2024-11-16"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2025-02-10",
+          "lift": 2.14,
+          "start": "2025-01-29"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2025-05-02",
+          "lift": 1.65,
+          "start": "2025-04-28"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2025-09-27",
+          "lift": 1.85,
+          "start": "2025-09-16"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2026-05-18",
+          "lift": 1.56,
+          "start": "2026-05-14"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-08-23",
+          "lift": 2.11,
+          "start": "2026-08-13"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2026-09-28",
+          "lift": 1.73,
+          "start": "2026-09-18"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.4,
+        "IN-GJ-AMD": 0.14,
+        "IN-KA-BLR": 0.06,
+        "IN-KL-KOC": 0.01,
+        "IN-MH-MUM": 0.24,
+        "IN-MH-PUN": 0.05,
+        "IN-TG-HYD": 0.04,
+        "IN-TN-CHE": 0.03,
+        "IN-WB-KOL": 0.03
+      },
+      "shocks": [
+        {
+          "end": "2023-12-07",
+          "multiplier": 0.045,
+          "start": "2023-12-03"
+        },
+        {
+          "end": "2024-01-08",
+          "multiplier": 0.058,
+          "start": "2024-01-03"
+        },
+        {
+          "end": "2024-04-24",
+          "multiplier": 0.075,
+          "start": "2024-04-22"
+        },
+        {
+          "end": "2024-06-11",
+          "multiplier": 0.065,
+          "start": "2024-06-10"
+        },
+        {
+          "end": "2025-02-26",
+          "multiplier": 0.068,
+          "start": "2025-02-22"
+        },
+        {
+          "end": "2025-04-07",
+          "multiplier": 0.02,
+          "start": "2025-04-05"
+        },
+        {
+          "end": "2025-10-07",
+          "multiplier": 0.061,
+          "start": "2025-10-05"
+        },
+        {
+          "end": "2025-10-26",
+          "multiplier": 0.022,
+          "start": "2025-10-23"
+        },
+        {
+          "end": "2025-12-09",
+          "multiplier": 0.038,
+          "start": "2025-12-06"
+        },
+        {
+          "end": "2026-04-28",
+          "multiplier": 0.069,
+          "start": "2026-04-26"
+        },
+        {
+          "end": "2026-06-18",
+          "multiplier": 0.033,
+          "start": "2026-06-13"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.1,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 14.0,
+          "center": "10-24",
+          "width_days": 11
+        }
+      ]
+    },
+    "FDS-NMK-200": {
+      "base_level": 300,
+      "category": "Packaged Foods",
+      "channel_weights": {
+        "distributor": 0.4,
+        "ecommerce": 0.15,
+        "export": 0.1,
+        "retail": 0.35
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.088,
+        "C02@IN-MH-PUN": 0.072727,
+        "C03@IN-GJ-AMD": 0.151111,
+        "C04@IN-DL-NDL": 0.053333,
+        "C05@IN-KA-BLR": 0.026667,
+        "C06@IN-TN-CHE": 0.012,
+        "C07@IN-TG-HYD": 0.036364,
+        "C08@IN-WB-KOL": 0.026667,
+        "C09@IN-DL-NDL": 0.046667,
+        "C10@IN-MH-MUM": 0.077,
+        "C11@IN-KA-BLR": 0.023333,
+        "C12@IN-TN-CHE": 0.0105,
+        "C13@IN-WB-KOL": 0.023333,
+        "C14@IN-KL-KOC": 0.014,
+        "C15@IN-GJ-AMD": 0.132222,
+        "C16@IN-DL-NDL": 0.01,
+        "C16@IN-GJ-AMD": 0.028333,
+        "C16@IN-KA-BLR": 0.005,
+        "C16@IN-KL-KOC": 0.003,
+        "C16@IN-MH-MUM": 0.0165,
+        "C16@IN-MH-PUN": 0.013636,
+        "C16@IN-TG-HYD": 0.006818,
+        "C16@IN-TN-CHE": 0.00225,
+        "C16@IN-WB-KOL": 0.005,
+        "C17@IN-DL-NDL": 0.006,
+        "C17@IN-GJ-AMD": 0.017,
+        "C17@IN-KA-BLR": 0.003,
+        "C17@IN-KL-KOC": 0.0018,
+        "C17@IN-MH-MUM": 0.0099,
+        "C17@IN-MH-PUN": 0.008182,
+        "C17@IN-TG-HYD": 0.004091,
+        "C17@IN-TN-CHE": 0.00135,
+        "C17@IN-WB-KOL": 0.003,
+        "C18@IN-DL-NDL": 0.004,
+        "C18@IN-GJ-AMD": 0.011333,
+        "C18@IN-KA-BLR": 0.002,
+        "C18@IN-KL-KOC": 0.0012,
+        "C18@IN-MH-MUM": 0.0066,
+        "C18@IN-MH-PUN": 0.005455,
+        "C18@IN-TG-HYD": 0.002727,
+        "C18@IN-TN-CHE": 0.0009,
+        "C18@IN-WB-KOL": 0.002,
+        "C23@IN-MH-MUM": 0.022,
+        "C24@IN-TN-CHE": 0.003
+      },
+      "launched_on": "2018-07-01",
+      "lifecycle": "mature",
+      "list_price_minor": 9900,
+      "name": "Namkeen Mix 200g",
+      "promotions": [
+        {
+          "discount_pct": 0.18,
+          "end": "2023-10-27",
+          "lift": 1.84,
+          "start": "2023-10-20"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2024-02-05",
+          "lift": 1.6,
+          "start": "2024-01-28"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-05-31",
+          "lift": 2.07,
+          "start": "2024-05-27"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-10-31",
+          "lift": 2.04,
+          "start": "2024-10-25"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2025-03-20",
+          "lift": 1.45,
+          "start": "2025-03-07"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2025-06-17",
+          "lift": 2.05,
+          "start": "2025-06-09"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2025-11-04",
+          "lift": 1.86,
+          "start": "2025-10-22"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2026-01-04",
+          "lift": 1.4,
+          "start": "2025-12-27"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2026-02-03",
+          "lift": 1.64,
+          "start": "2026-01-29"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2026-05-31",
+          "lift": 1.5,
+          "start": "2026-05-27"
+        },
+        {
+          "discount_pct": 0.2,
+          "end": "2026-07-26",
+          "lift": 1.61,
+          "start": "2026-07-22"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.12,
+        "IN-GJ-AMD": 0.34,
+        "IN-KA-BLR": 0.06,
+        "IN-KL-KOC": 0.02,
+        "IN-MH-MUM": 0.22,
+        "IN-MH-PUN": 0.1,
+        "IN-TG-HYD": 0.05,
+        "IN-TN-CHE": 0.03,
+        "IN-WB-KOL": 0.06
+      },
+      "shocks": [
+        {
+          "end": "2023-10-16",
+          "multiplier": 0.035,
+          "start": "2023-10-13"
+        },
+        {
+          "end": "2023-11-06",
+          "multiplier": 0.035,
+          "start": "2023-11-03"
+        },
+        {
+          "end": "2024-10-12",
+          "multiplier": 0.073,
+          "start": "2024-10-11"
+        },
+        {
+          "end": "2025-04-21",
+          "multiplier": 0.029,
+          "start": "2025-04-19"
+        },
+        {
+          "end": "2025-08-05",
+          "multiplier": 0.049,
+          "start": "2025-08-04"
+        },
+        {
+          "end": "2025-10-23",
+          "multiplier": 0.055,
+          "start": "2025-10-21"
+        },
+        {
+          "end": "2026-02-17",
+          "multiplier": 0.041,
+          "start": "2026-02-15"
+        },
+        {
+          "end": "2026-04-13",
+          "multiplier": 0.076,
+          "start": "2026-04-11"
+        },
+        {
+          "end": "2026-06-04",
+          "multiplier": 0.043,
+          "start": "2026-05-30"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.15,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 0.35,
+          "center": "10-24",
+          "width_days": 20
+        }
+      ]
+    },
+    "FDS-SWT-500": {
+      "base_level": 120,
+      "category": "Packaged Foods",
+      "channel_weights": {
+        "direct": 0.1,
+        "distributor": 0.3,
+        "ecommerce": 0.1,
+        "export": 0.05,
+        "retail": 0.45
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.033333,
+        "C02@IN-MH-PUN": 0.03,
+        "C03@IN-GJ-AMD": 0.028235,
+        "C04@IN-DL-NDL": 0.082105,
+        "C05@IN-KA-BLR": 0.014118,
+        "C06@IN-TN-CHE": 0.006667,
+        "C07@IN-TG-HYD": 0.03,
+        "C08@IN-WB-KOL": 0.141176,
+        "C09@IN-DL-NDL": 0.123158,
+        "C10@IN-MH-MUM": 0.05,
+        "C11@IN-KA-BLR": 0.021176,
+        "C12@IN-TN-CHE": 0.01,
+        "C13@IN-WB-KOL": 0.211765,
+        "C14@IN-KL-KOC": 0.016364,
+        "C15@IN-GJ-AMD": 0.042353,
+        "C16@IN-DL-NDL": 0.013684,
+        "C16@IN-GJ-AMD": 0.004706,
+        "C16@IN-KA-BLR": 0.002353,
+        "C16@IN-KL-KOC": 0.001818,
+        "C16@IN-MH-MUM": 0.005556,
+        "C16@IN-MH-PUN": 0.005,
+        "C16@IN-TG-HYD": 0.005,
+        "C16@IN-TN-CHE": 0.001111,
+        "C16@IN-WB-KOL": 0.023529,
+        "C17@IN-DL-NDL": 0.008211,
+        "C17@IN-GJ-AMD": 0.002824,
+        "C17@IN-KA-BLR": 0.001412,
+        "C17@IN-KL-KOC": 0.001091,
+        "C17@IN-MH-MUM": 0.003333,
+        "C17@IN-MH-PUN": 0.003,
+        "C17@IN-TG-HYD": 0.003,
+        "C17@IN-TN-CHE": 0.000667,
+        "C17@IN-WB-KOL": 0.014118,
+        "C18@IN-DL-NDL": 0.005474,
+        "C18@IN-GJ-AMD": 0.001882,
+        "C18@IN-KA-BLR": 0.000941,
+        "C18@IN-KL-KOC": 0.000727,
+        "C18@IN-MH-MUM": 0.002222,
+        "C18@IN-MH-PUN": 0.002,
+        "C18@IN-TG-HYD": 0.002,
+        "C18@IN-TN-CHE": 0.000444,
+        "C18@IN-WB-KOL": 0.009412,
+        "C22@IN-DL-NDL": 0.027368,
+        "C23@IN-MH-MUM": 0.005556,
+        "C24@IN-TN-CHE": 0.001111
+      },
+      "launched_on": "2016-10-01",
+      "lifecycle": "mature",
+      "list_price_minor": 34900,
+      "name": "Assorted Mithai 500g",
+      "promotions": [
+        {
+          "discount_pct": 0.17,
+          "end": "2023-12-10",
+          "lift": 2.13,
+          "start": "2023-12-03"
+        },
+        {
+          "discount_pct": 0.2,
+          "end": "2024-01-31",
+          "lift": 1.98,
+          "start": "2024-01-27"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-03-08",
+          "lift": 1.74,
+          "start": "2024-02-29"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2024-04-13",
+          "lift": 1.75,
+          "start": "2024-04-02"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2024-09-05",
+          "lift": 1.52,
+          "start": "2024-08-25"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2024-12-20",
+          "lift": 2.16,
+          "start": "2024-12-09"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-01-13",
+          "lift": 1.91,
+          "start": "2025-01-09"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-03-21",
+          "lift": 1.8,
+          "start": "2025-03-15"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2025-06-06",
+          "lift": 1.7,
+          "start": "2025-05-25"
+        },
+        {
+          "discount_pct": 0.2,
+          "end": "2025-09-04",
+          "lift": 1.9,
+          "start": "2025-08-22"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2025-11-02",
+          "lift": 1.46,
+          "start": "2025-10-28"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2026-02-16",
+          "lift": 1.75,
+          "start": "2026-02-08"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-03-18",
+          "lift": 1.64,
+          "start": "2026-03-05"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2026-05-01",
+          "lift": 1.58,
+          "start": "2026-04-21"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-07-20",
+          "lift": 2.13,
+          "start": "2026-07-14"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.26,
+        "IN-GJ-AMD": 0.08,
+        "IN-KA-BLR": 0.04,
+        "IN-KL-KOC": 0.02,
+        "IN-MH-MUM": 0.1,
+        "IN-MH-PUN": 0.04,
+        "IN-TG-HYD": 0.04,
+        "IN-TN-CHE": 0.02,
+        "IN-WB-KOL": 0.4
+      },
+      "shocks": [
+        {
+          "end": "2024-02-20",
+          "multiplier": 0.061,
+          "start": "2024-02-15"
+        },
+        {
+          "end": "2024-06-11",
+          "multiplier": 0.075,
+          "start": "2024-06-10"
+        },
+        {
+          "end": "2024-07-29",
+          "multiplier": 0.078,
+          "start": "2024-07-27"
+        },
+        {
+          "end": "2024-09-23",
+          "multiplier": 0.039,
+          "start": "2024-09-20"
+        },
+        {
+          "end": "2024-10-25",
+          "multiplier": 0.076,
+          "start": "2024-10-23"
+        },
+        {
+          "end": "2024-12-09",
+          "multiplier": 0.063,
+          "start": "2024-12-08"
+        },
+        {
+          "end": "2025-01-18",
+          "multiplier": 0.064,
+          "start": "2025-01-17"
+        },
+        {
+          "end": "2025-07-15",
+          "multiplier": 0.06,
+          "start": "2025-07-14"
+        },
+        {
+          "end": "2026-01-19",
+          "multiplier": 0.024,
+          "start": "2026-01-15"
+        },
+        {
+          "end": "2026-06-15",
+          "multiplier": 0.071,
+          "start": "2026-06-14"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.04,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 3.0,
+          "center": "10-24",
+          "width_days": 14
+        }
+      ]
+    },
+    "IND-BRG-6205": {
+      "base_level": 450,
+      "category": "Industrial Components",
+      "channel_weights": {
+        "direct": 0.45,
+        "distributor": 0.35,
+        "export": 0.2
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.063636,
+        "C02@IN-MH-PUN": 0.13125,
+        "C03@IN-GJ-AMD": 0.0525,
+        "C04@IN-DL-NDL": 0.06,
+        "C05@IN-KA-BLR": 0.14,
+        "C06@IN-TN-CHE": 0.077,
+        "C07@IN-TG-HYD": 0.06,
+        "C19@IN-MH-PUN": 0.16875,
+        "C20@IN-TN-CHE": 0.099,
+        "C21@IN-GJ-AMD": 0.0675,
+        "C24@IN-TN-CHE": 0.044,
+        "C25@IN-MH-MUM": 0.036364
+      },
+      "launched_on": "2014-05-01",
+      "lifecycle": "mature",
+      "list_price_minor": 18500,
+      "name": "Ball Bearing 6205-2RS",
+      "promotions": [
+        {
+          "discount_pct": 0.17,
+          "end": "2023-12-16",
+          "lift": 1.99,
+          "start": "2023-12-03"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2024-01-24",
+          "lift": 1.48,
+          "start": "2024-01-20"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-03-16",
+          "lift": 1.77,
+          "start": "2024-03-04"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-04-28",
+          "lift": 2.01,
+          "start": "2025-04-15"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2025-06-21",
+          "lift": 1.82,
+          "start": "2025-06-16"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2025-10-05",
+          "lift": 1.8,
+          "start": "2025-09-28"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-03-03",
+          "lift": 1.96,
+          "start": "2026-02-21"
+        },
+        {
+          "discount_pct": 0.16,
+          "end": "2026-04-22",
+          "lift": 1.98,
+          "start": "2026-04-14"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2026-07-07",
+          "lift": 2.17,
+          "start": "2026-07-02"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2026-08-03",
+          "lift": 1.56,
+          "start": "2026-07-24"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2026-10-05",
+          "lift": 2.19,
+          "start": "2026-09-29"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.06,
+        "IN-GJ-AMD": 0.12,
+        "IN-KA-BLR": 0.14,
+        "IN-MH-MUM": 0.1,
+        "IN-MH-PUN": 0.3,
+        "IN-TG-HYD": 0.06,
+        "IN-TN-CHE": 0.22
+      },
+      "shocks": [
+        {
+          "end": "2024-01-25",
+          "multiplier": 0.024,
+          "start": "2024-01-21"
+        },
+        {
+          "end": "2024-06-14",
+          "multiplier": 0.033,
+          "start": "2024-06-12"
+        },
+        {
+          "end": "2024-09-05",
+          "multiplier": 0.076,
+          "start": "2024-09-02"
+        },
+        {
+          "end": "2024-12-29",
+          "multiplier": 0.055,
+          "start": "2024-12-25"
+        },
+        {
+          "end": "2025-03-09",
+          "multiplier": 0.034,
+          "start": "2025-03-08"
+        },
+        {
+          "end": "2025-03-18",
+          "multiplier": 0.038,
+          "start": "2025-03-17"
+        },
+        {
+          "end": "2025-04-11",
+          "multiplier": 0.037,
+          "start": "2025-04-09"
+        },
+        {
+          "end": "2026-04-05",
+          "multiplier": 0.047,
+          "start": "2026-04-04"
+        },
+        {
+          "end": "2026-06-28",
+          "multiplier": 0.078,
+          "start": "2026-06-27"
+        },
+        {
+          "end": "2026-09-05",
+          "multiplier": 0.054,
+          "start": "2026-08-31"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.4,
+        "type": "exponential"
+      },
+      "weekly_profile": "b2b",
+      "yearly": []
+    },
+    "IND-MTR-1HP": {
+      "base_level": 55,
+      "category": "Industrial Components",
+      "channel_weights": {
+        "direct": 0.35,
+        "distributor": 0.5,
+        "export": 0.15
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.061538,
+        "C02@IN-MH-PUN": 0.129412,
+        "C03@IN-GJ-AMD": 0.152941,
+        "C04@IN-DL-NDL": 0.1,
+        "C05@IN-KA-BLR": 0.08,
+        "C06@IN-TN-CHE": 0.07,
+        "C07@IN-TG-HYD": 0.08,
+        "C08@IN-WB-KOL": 0.04,
+        "C19@IN-MH-PUN": 0.090588,
+        "C20@IN-TN-CHE": 0.049,
+        "C21@IN-GJ-AMD": 0.107059,
+        "C24@IN-TN-CHE": 0.021,
+        "C25@IN-MH-MUM": 0.018462
+      },
+      "launched_on": "2015-08-01",
+      "lifecycle": "mature",
+      "list_price_minor": 845000,
+      "name": "Induction Motor 1HP",
+      "promotions": [
+        {
+          "discount_pct": 0.19,
+          "end": "2024-02-29",
+          "lift": 1.46,
+          "start": "2024-02-21"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-05-06",
+          "lift": 2.1,
+          "start": "2024-04-25"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-06-21",
+          "lift": 1.61,
+          "start": "2024-06-11"
+        },
+        {
+          "discount_pct": 0.16,
+          "end": "2024-07-14",
+          "lift": 1.41,
+          "start": "2024-07-08"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2025-03-16",
+          "lift": 1.69,
+          "start": "2025-03-06"
+        },
+        {
+          "discount_pct": 0.08,
+          "end": "2025-04-16",
+          "lift": 1.43,
+          "start": "2025-04-11"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2025-07-04",
+          "lift": 1.45,
+          "start": "2025-06-24"
+        },
+        {
+          "discount_pct": 0.08,
+          "end": "2026-02-01",
+          "lift": 1.59,
+          "start": "2026-01-28"
+        },
+        {
+          "discount_pct": 0.08,
+          "end": "2026-06-26",
+          "lift": 1.49,
+          "start": "2026-06-15"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2026-08-08",
+          "lift": 2.16,
+          "start": "2026-07-31"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.1,
+        "IN-GJ-AMD": 0.26,
+        "IN-KA-BLR": 0.08,
+        "IN-MH-MUM": 0.08,
+        "IN-MH-PUN": 0.22,
+        "IN-TG-HYD": 0.08,
+        "IN-TN-CHE": 0.14,
+        "IN-WB-KOL": 0.04
+      },
+      "shocks": [
+        {
+          "end": "2023-11-27",
+          "multiplier": 0.05,
+          "start": "2023-11-23"
+        },
+        {
+          "end": "2023-12-30",
+          "multiplier": 0.052,
+          "start": "2023-12-25"
+        },
+        {
+          "end": "2024-07-30",
+          "multiplier": 0.05,
+          "start": "2024-07-27"
+        },
+        {
+          "end": "2024-08-17",
+          "multiplier": 0.053,
+          "start": "2024-08-14"
+        },
+        {
+          "end": "2025-01-03",
+          "multiplier": 0.022,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-04-28",
+          "multiplier": 0.064,
+          "start": "2025-04-27"
+        },
+        {
+          "end": "2025-10-05",
+          "multiplier": 0.061,
+          "start": "2025-09-30"
+        },
+        {
+          "end": "2026-04-05",
+          "multiplier": 0.025,
+          "start": "2026-04-02"
+        },
+        {
+          "end": "2026-05-15",
+          "multiplier": 0.032,
+          "start": "2026-05-12"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.07,
+        "type": "exponential"
+      },
+      "weekly_profile": "b2b",
+      "yearly": [
+        {
+          "amplitude": 0.6,
+          "center": "03-20",
+          "width_days": 12
+        }
+      ]
+    },
+    "IND-PMP-05": {
+      "base_level": 40,
+      "category": "Industrial Components",
+      "channel_weights": {
+        "direct": 0.25,
+        "distributor": 0.6,
+        "export": 0.15
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.048,
+        "C02@IN-MH-PUN": 0.141176,
+        "C03@IN-GJ-AMD": 0.24,
+        "C04@IN-DL-NDL": 0.06,
+        "C05@IN-KA-BLR": 0.06,
+        "C06@IN-TN-CHE": 0.048,
+        "C07@IN-TG-HYD": 0.16,
+        "C08@IN-WB-KOL": 0.04,
+        "C19@IN-MH-PUN": 0.058824,
+        "C20@IN-TN-CHE": 0.02,
+        "C21@IN-GJ-AMD": 0.1,
+        "C24@IN-TN-CHE": 0.012,
+        "C25@IN-MH-MUM": 0.012
+      },
+      "launched_on": "2017-11-01",
+      "lifecycle": "mature",
+      "list_price_minor": 1190000,
+      "name": "Submersible Pump 0.5HP",
+      "promotions": [
+        {
+          "discount_pct": 0.12,
+          "end": "2023-11-03",
+          "lift": 1.85,
+          "start": "2023-10-28"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2024-01-23",
+          "lift": 2.07,
+          "start": "2024-01-14"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2024-04-16",
+          "lift": 1.53,
+          "start": "2024-04-06"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2024-06-27",
+          "lift": 1.7,
+          "start": "2024-06-17"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2024-11-24",
+          "lift": 1.75,
+          "start": "2024-11-13"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-02-20",
+          "lift": 2.05,
+          "start": "2025-02-11"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2025-04-17",
+          "lift": 2.05,
+          "start": "2025-04-07"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-06-21",
+          "lift": 1.98,
+          "start": "2025-06-11"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2025-08-03",
+          "lift": 1.98,
+          "start": "2025-07-23"
+        },
+        {
+          "discount_pct": 0.09,
+          "end": "2025-11-20",
+          "lift": 2.0,
+          "start": "2025-11-13"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2026-05-23",
+          "lift": 2.11,
+          "start": "2026-05-14"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2026-07-19",
+          "lift": 2.14,
+          "start": "2026-07-13"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-10-08",
+          "lift": 1.62,
+          "start": "2026-09-27"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.06,
+        "IN-GJ-AMD": 0.34,
+        "IN-KA-BLR": 0.06,
+        "IN-MH-MUM": 0.06,
+        "IN-MH-PUN": 0.2,
+        "IN-TG-HYD": 0.16,
+        "IN-TN-CHE": 0.08,
+        "IN-WB-KOL": 0.04
+      },
+      "shocks": [
+        {
+          "end": "2023-11-10",
+          "multiplier": 0.055,
+          "start": "2023-11-07"
+        },
+        {
+          "end": "2024-01-01",
+          "multiplier": 0.07,
+          "start": "2023-12-28"
+        },
+        {
+          "end": "2024-05-10",
+          "multiplier": 0.062,
+          "start": "2024-05-07"
+        },
+        {
+          "end": "2025-05-31",
+          "multiplier": 0.064,
+          "start": "2025-05-27"
+        },
+        {
+          "end": "2025-07-15",
+          "multiplier": 0.05,
+          "start": "2025-07-11"
+        },
+        {
+          "end": "2025-09-01",
+          "multiplier": 0.079,
+          "start": "2025-08-30"
+        },
+        {
+          "end": "2025-11-30",
+          "multiplier": 0.071,
+          "start": "2025-11-28"
+        },
+        {
+          "end": "2026-04-18",
+          "multiplier": 0.059,
+          "start": "2026-04-14"
+        },
+        {
+          "end": "2026-08-09",
+          "multiplier": 0.063,
+          "start": "2026-08-04"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.04,
+        "type": "exponential"
+      },
+      "weekly_profile": "b2b",
+      "yearly": [
+        {
+          "amplitude": 1.2,
+          "center": "05-10",
+          "width_days": 30
+        }
+      ]
+    },
+    "KIT-AFR-45": {
+      "base_level": 140,
+      "category": "Kitchen Appliances",
+      "channel_weights": {
+        "distributor": 0.1,
+        "ecommerce": 0.65,
+        "retail": 0.25
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.022,
+        "C02@IN-MH-PUN": 0.010667,
+        "C03@IN-GJ-AMD": 0.004,
+        "C04@IN-DL-NDL": 0.018,
+        "C05@IN-KA-BLR": 0.026,
+        "C06@IN-TN-CHE": 0.006,
+        "C07@IN-TG-HYD": 0.016,
+        "C08@IN-WB-KOL": 0.002,
+        "C09@IN-DL-NDL": 0.045,
+        "C10@IN-MH-MUM": 0.055,
+        "C11@IN-KA-BLR": 0.065,
+        "C12@IN-TN-CHE": 0.015,
+        "C13@IN-WB-KOL": 0.005,
+        "C14@IN-KL-KOC": 0.005556,
+        "C15@IN-GJ-AMD": 0.01,
+        "C16@IN-DL-NDL": 0.0585,
+        "C16@IN-GJ-AMD": 0.013,
+        "C16@IN-KA-BLR": 0.0845,
+        "C16@IN-KL-KOC": 0.007222,
+        "C16@IN-MH-MUM": 0.0715,
+        "C16@IN-MH-PUN": 0.034667,
+        "C16@IN-TG-HYD": 0.052,
+        "C16@IN-TN-CHE": 0.0195,
+        "C16@IN-WB-KOL": 0.0065,
+        "C17@IN-DL-NDL": 0.0351,
+        "C17@IN-GJ-AMD": 0.0078,
+        "C17@IN-KA-BLR": 0.0507,
+        "C17@IN-KL-KOC": 0.004333,
+        "C17@IN-MH-MUM": 0.0429,
+        "C17@IN-MH-PUN": 0.0208,
+        "C17@IN-TG-HYD": 0.0312,
+        "C17@IN-TN-CHE": 0.0117,
+        "C17@IN-WB-KOL": 0.0039,
+        "C18@IN-DL-NDL": 0.0234,
+        "C18@IN-GJ-AMD": 0.0052,
+        "C18@IN-KA-BLR": 0.0338,
+        "C18@IN-KL-KOC": 0.002889,
+        "C18@IN-MH-MUM": 0.0286,
+        "C18@IN-MH-PUN": 0.013867,
+        "C18@IN-TG-HYD": 0.0208,
+        "C18@IN-TN-CHE": 0.0078,
+        "C18@IN-WB-KOL": 0.0026
+      },
+      "launched_on": "2026-02-08",
+      "lifecycle": "new",
+      "list_price_minor": 649900,
+      "name": "Air Fryer 4.5L",
+      "promotions": [
+        {
+          "discount_pct": 0.17,
+          "end": "2026-02-21",
+          "lift": 2.08,
+          "start": "2026-02-10"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2026-05-28",
+          "lift": 1.89,
+          "start": "2026-05-16"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-07-10",
+          "lift": 2.06,
+          "start": "2026-07-01"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2026-08-18",
+          "lift": 2.15,
+          "start": "2026-08-12"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.18,
+        "IN-GJ-AMD": 0.04,
+        "IN-KA-BLR": 0.26,
+        "IN-KL-KOC": 0.02,
+        "IN-MH-MUM": 0.22,
+        "IN-MH-PUN": 0.08,
+        "IN-TG-HYD": 0.12,
+        "IN-TN-CHE": 0.06,
+        "IN-WB-KOL": 0.02
+      },
+      "shocks": [
+        {
+          "end": "2026-03-31",
+          "multiplier": 0.061,
+          "start": "2026-03-30"
+        },
+        {
+          "end": "2026-09-11",
+          "multiplier": 0.029,
+          "start": "2026-09-08"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.3,
+        "midpoint_days": 45,
+        "scale_days": 15,
+        "type": "launch_ramp"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 0.8,
+          "center": "10-24",
+          "width_days": 15
+        }
+      ]
+    },
+    "KIT-IND-2000": {
+      "base_level": 70,
+      "category": "Kitchen Appliances",
+      "channel_weights": {
+        "distributor": 0.3,
+        "ecommerce": 0.25,
+        "export": 0.05,
+        "retail": 0.4
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.039,
+        "C02@IN-MH-PUN": 0.043636,
+        "C03@IN-GJ-AMD": 0.031579,
+        "C04@IN-DL-NDL": 0.047368,
+        "C05@IN-KA-BLR": 0.037895,
+        "C06@IN-TN-CHE": 0.031579,
+        "C07@IN-TG-HYD": 0.054545,
+        "C08@IN-WB-KOL": 0.044211,
+        "C09@IN-DL-NDL": 0.063158,
+        "C10@IN-MH-MUM": 0.052,
+        "C11@IN-KA-BLR": 0.050526,
+        "C12@IN-TN-CHE": 0.042105,
+        "C13@IN-WB-KOL": 0.058947,
+        "C14@IN-KL-KOC": 0.049231,
+        "C15@IN-GJ-AMD": 0.042105,
+        "C16@IN-DL-NDL": 0.019737,
+        "C16@IN-GJ-AMD": 0.013158,
+        "C16@IN-KA-BLR": 0.015789,
+        "C16@IN-KL-KOC": 0.015385,
+        "C16@IN-MH-MUM": 0.01625,
+        "C16@IN-MH-PUN": 0.018182,
+        "C16@IN-TG-HYD": 0.022727,
+        "C16@IN-TN-CHE": 0.013158,
+        "C16@IN-WB-KOL": 0.018421,
+        "C17@IN-DL-NDL": 0.011842,
+        "C17@IN-GJ-AMD": 0.007895,
+        "C17@IN-KA-BLR": 0.009474,
+        "C17@IN-KL-KOC": 0.009231,
+        "C17@IN-MH-MUM": 0.00975,
+        "C17@IN-MH-PUN": 0.010909,
+        "C17@IN-TG-HYD": 0.013636,
+        "C17@IN-TN-CHE": 0.007895,
+        "C17@IN-WB-KOL": 0.011053,
+        "C18@IN-DL-NDL": 0.007895,
+        "C18@IN-GJ-AMD": 0.005263,
+        "C18@IN-KA-BLR": 0.006316,
+        "C18@IN-KL-KOC": 0.006154,
+        "C18@IN-MH-MUM": 0.0065,
+        "C18@IN-MH-PUN": 0.007273,
+        "C18@IN-TG-HYD": 0.009091,
+        "C18@IN-TN-CHE": 0.005263,
+        "C18@IN-WB-KOL": 0.007368,
+        "C23@IN-MH-MUM": 0.0065
+      },
+      "launched_on": "2018-03-15",
+      "lifecycle": "mature",
+      "list_price_minor": 279900,
+      "name": "Induction Cooktop 2000W",
+      "promotions": [
+        {
+          "discount_pct": 0.1,
+          "end": "2023-10-27",
+          "lift": 1.94,
+          "start": "2023-10-15"
+        },
+        {
+          "discount_pct": 0.13,
+          "end": "2024-05-20",
+          "lift": 2.04,
+          "start": "2024-05-11"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2024-08-31",
+          "lift": 1.96,
+          "start": "2024-08-22"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2025-02-14",
+          "lift": 1.66,
+          "start": "2025-02-04"
+        },
+        {
+          "discount_pct": 0.19,
+          "end": "2025-04-10",
+          "lift": 1.67,
+          "start": "2025-03-28"
+        },
+        {
+          "discount_pct": 0.18,
+          "end": "2025-06-21",
+          "lift": 2.04,
+          "start": "2025-06-16"
+        },
+        {
+          "discount_pct": 0.11,
+          "end": "2025-08-14",
+          "lift": 1.83,
+          "start": "2025-08-06"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2025-10-06",
+          "lift": 2.06,
+          "start": "2025-09-29"
+        },
+        {
+          "discount_pct": 0.16,
+          "end": "2026-03-04",
+          "lift": 1.74,
+          "start": "2026-02-26"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2026-07-07",
+          "lift": 1.68,
+          "start": "2026-06-28"
+        },
+        {
+          "discount_pct": 0.1,
+          "end": "2026-09-06",
+          "lift": 2.14,
+          "start": "2026-08-25"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.15,
+        "IN-GJ-AMD": 0.1,
+        "IN-KA-BLR": 0.12,
+        "IN-KL-KOC": 0.08,
+        "IN-MH-MUM": 0.13,
+        "IN-MH-PUN": 0.08,
+        "IN-TG-HYD": 0.1,
+        "IN-TN-CHE": 0.1,
+        "IN-WB-KOL": 0.14
+      },
+      "shocks": [
+        {
+          "end": "2023-10-23",
+          "multiplier": 0.05,
+          "start": "2023-10-21"
+        },
+        {
+          "end": "2023-11-30",
+          "multiplier": 0.029,
+          "start": "2023-11-27"
+        },
+        {
+          "end": "2024-01-02",
+          "multiplier": 0.075,
+          "start": "2023-12-30"
+        },
+        {
+          "end": "2024-01-22",
+          "multiplier": 0.037,
+          "start": "2024-01-20"
+        },
+        {
+          "end": "2024-12-07",
+          "multiplier": 0.038,
+          "start": "2024-12-02"
+        },
+        {
+          "end": "2025-01-20",
+          "multiplier": 0.029,
+          "start": "2025-01-15"
+        },
+        {
+          "end": "2025-06-08",
+          "multiplier": 0.045,
+          "start": "2025-06-05"
+        },
+        {
+          "end": "2025-08-31",
+          "multiplier": 0.024,
+          "start": "2025-08-29"
+        },
+        {
+          "end": "2025-10-09",
+          "multiplier": 0.076,
+          "start": "2025-10-08"
+        },
+        {
+          "end": "2026-02-26",
+          "multiplier": 0.078,
+          "start": "2026-02-24"
+        },
+        {
+          "end": "2026-03-19",
+          "multiplier": 0.021,
+          "start": "2026-03-15"
+        },
+        {
+          "end": "2026-04-29",
+          "multiplier": 0.028,
+          "start": "2026-04-28"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.03,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 0.3,
+          "center": "12-20",
+          "width_days": 30
+        }
+      ]
+    },
+    "KIT-MXG-750": {
+      "base_level": 90,
+      "category": "Kitchen Appliances",
+      "channel_weights": {
+        "distributor": 0.3,
+        "ecommerce": 0.25,
+        "export": 0.05,
+        "retail": 0.4
+      },
+      "customer_weights": {
+        "C01@IN-MH-MUM": 0.042,
+        "C02@IN-MH-PUN": 0.032727,
+        "C03@IN-GJ-AMD": 0.025263,
+        "C04@IN-DL-NDL": 0.031579,
+        "C05@IN-KA-BLR": 0.050526,
+        "C06@IN-TN-CHE": 0.063158,
+        "C07@IN-TG-HYD": 0.065455,
+        "C08@IN-WB-KOL": 0.012632,
+        "C09@IN-DL-NDL": 0.042105,
+        "C10@IN-MH-MUM": 0.056,
+        "C11@IN-KA-BLR": 0.067368,
+        "C12@IN-TN-CHE": 0.084211,
+        "C13@IN-WB-KOL": 0.016842,
+        "C14@IN-KL-KOC": 0.061538,
+        "C15@IN-GJ-AMD": 0.033684,
+        "C16@IN-DL-NDL": 0.013158,
+        "C16@IN-GJ-AMD": 0.010526,
+        "C16@IN-KA-BLR": 0.021053,
+        "C16@IN-KL-KOC": 0.019231,
+        "C16@IN-MH-MUM": 0.0175,
+        "C16@IN-MH-PUN": 0.013636,
+        "C16@IN-TG-HYD": 0.027273,
+        "C16@IN-TN-CHE": 0.026316,
+        "C16@IN-WB-KOL": 0.005263,
+        "C17@IN-DL-NDL": 0.007895,
+        "C17@IN-GJ-AMD": 0.006316,
+        "C17@IN-KA-BLR": 0.012632,
+        "C17@IN-KL-KOC": 0.011538,
+        "C17@IN-MH-MUM": 0.0105,
+        "C17@IN-MH-PUN": 0.008182,
+        "C17@IN-TG-HYD": 0.016364,
+        "C17@IN-TN-CHE": 0.015789,
+        "C17@IN-WB-KOL": 0.003158,
+        "C18@IN-DL-NDL": 0.005263,
+        "C18@IN-GJ-AMD": 0.004211,
+        "C18@IN-KA-BLR": 0.008421,
+        "C18@IN-KL-KOC": 0.007692,
+        "C18@IN-MH-MUM": 0.007,
+        "C18@IN-MH-PUN": 0.005455,
+        "C18@IN-TG-HYD": 0.010909,
+        "C18@IN-TN-CHE": 0.010526,
+        "C18@IN-WB-KOL": 0.002105,
+        "C23@IN-MH-MUM": 0.007
+      },
+      "launched_on": "2016-06-01",
+      "lifecycle": "mature",
+      "list_price_minor": 349900,
+      "name": "Mixer Grinder 750W",
+      "promotions": [
+        {
+          "discount_pct": 0.18,
+          "end": "2023-11-20",
+          "lift": 1.81,
+          "start": "2023-11-08"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2024-01-21",
+          "lift": 1.74,
+          "start": "2024-01-09"
+        },
+        {
+          "discount_pct": 0.16,
+          "end": "2024-03-27",
+          "lift": 1.72,
+          "start": "2024-03-16"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2024-09-03",
+          "lift": 1.86,
+          "start": "2024-08-28"
+        },
+        {
+          "discount_pct": 0.12,
+          "end": "2025-01-29",
+          "lift": 1.77,
+          "start": "2025-01-24"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2025-08-11",
+          "lift": 1.89,
+          "start": "2025-08-04"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2025-08-31",
+          "lift": 1.45,
+          "start": "2025-08-26"
+        },
+        {
+          "discount_pct": 0.17,
+          "end": "2026-06-18",
+          "lift": 1.44,
+          "start": "2026-06-10"
+        },
+        {
+          "discount_pct": 0.14,
+          "end": "2026-08-22",
+          "lift": 2.07,
+          "start": "2026-08-16"
+        },
+        {
+          "discount_pct": 0.15,
+          "end": "2026-09-29",
+          "lift": 1.89,
+          "start": "2026-09-21"
+        }
+      ],
+      "region_weights": {
+        "IN-DL-NDL": 0.1,
+        "IN-GJ-AMD": 0.08,
+        "IN-KA-BLR": 0.16,
+        "IN-KL-KOC": 0.1,
+        "IN-MH-MUM": 0.14,
+        "IN-MH-PUN": 0.06,
+        "IN-TG-HYD": 0.12,
+        "IN-TN-CHE": 0.2,
+        "IN-WB-KOL": 0.04
+      },
+      "shocks": [
+        {
+          "end": "2024-01-07",
+          "multiplier": 0.072,
+          "start": "2024-01-05"
+        },
+        {
+          "end": "2024-02-17",
+          "multiplier": 0.045,
+          "start": "2024-02-12"
+        },
+        {
+          "end": "2024-03-18",
+          "multiplier": 0.073,
+          "start": "2024-03-16"
+        },
+        {
+          "end": "2024-09-14",
+          "multiplier": 0.035,
+          "start": "2024-09-11"
+        },
+        {
+          "end": "2024-11-29",
+          "multiplier": 0.029,
+          "start": "2024-11-26"
+        },
+        {
+          "end": "2025-02-25",
+          "multiplier": 0.023,
+          "start": "2025-02-23"
+        },
+        {
+          "end": "2025-07-03",
+          "multiplier": 0.056,
+          "start": "2025-07-01"
+        },
+        {
+          "end": "2025-09-04",
+          "multiplier": 0.039,
+          "start": "2025-09-03"
+        },
+        {
+          "end": "2026-05-16",
+          "multiplier": 0.032,
+          "start": "2026-05-14"
+        },
+        {
+          "end": "2026-06-12",
+          "multiplier": 0.02,
+          "start": "2026-06-10"
+        },
+        {
+          "end": "2026-07-11",
+          "multiplier": 0.066,
+          "start": "2026-07-06"
+        }
+      ],
+      "trend": {
+        "annual_growth": 0.08,
+        "type": "exponential"
+      },
+      "weekly_profile": "retail",
+      "yearly": [
+        {
+          "amplitude": 1.8,
+          "center": "10-24",
+          "width_days": 12
+        }
+      ]
+    }
+  },
+  "schema_version": 1,
+  "seed": 42,
+  "weekly_profiles": {
+    "b2b": [
+      1.22,
+      1.26,
+      1.26,
+      1.24,
+      1.22,
+      0.55,
+      0.25
+    ],
+    "retail": [
+      0.86,
+      0.84,
+      0.86,
+      0.9,
+      1.04,
+      1.24,
+      1.26
+    ]
+  },
+  "window": {
+    "days": 1096,
+    "end": "2026-10-08",
+    "start": "2023-10-09"
+  }
+}
