@@ -1,0 +1,2 @@
+# Keep LF in the working copy on every OS: make recipes break on CRLF under MSYS make.
+* text=auto eol=lf
