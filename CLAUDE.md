@@ -42,18 +42,24 @@ The project is built in 10 phases. Build only what the current phase asks for.
   installed into a venv inside this folder: its deepest file path exceeds 260 chars.
   Prophet 1.5, LightGBM 4.7, statsmodels 0.15 and scikit-learn 1.9 are installed in that
   venv (`ml` extra) and verified to fit there, despite the space in "Skanda V".
-- **The em dash in this folder's name breaks native (C/C++) file I/O.** Windows' ANSI code
-  page is 1252: LightGBM `save_model`/`model_file=` on a path inside the repo fails, and
-  CmdStan (Prophet) writes the path into its CSV header as cp1252, which cmdstanpy cannot
-  parse. Rules: never pass an `output_dir` inside the repo to Prophet/cmdstanpy (the
-  default %TEMP% dir is fine); persist LightGBM with `model_to_string()` + Python file
-  I/O or joblib; pure-Python I/O (json, pickle, joblib, sqlite3) is fine anywhere.
-  Compiling Stan models (cmdstan's make) would also choke on the space in the venv path;
-  Prophet ships a precompiled model, so do not compile.
+- **Historical, does not apply to the current path:** the repo used to live in a folder
+  whose name contained an em dash, and that broke native (C/C++) file I/O. It now lives at
+  `D:\For college\college\projects\meridian-forecast` (pure ASCII; spaces are fine).
+  Re-tested 2026-10-11: LightGBM `save_model` + `Booster(model_file=)` and Prophet
+  `fit(output_dir=...)` + CSV read-back both work with output inside the repo, including
+  file and folder names with spaces. If the repo is ever moved to a non-ASCII path again,
+  the old rules return: Windows' ANSI code page is 1252, so LightGBM `save_model` fails and
+  CmdStan writes the path into its CSV header as cp1252, which cmdstanpy cannot parse;
+  keep Prophet's `output_dir` in %TEMP% and persist LightGBM with `model_to_string()`.
+- Still current: compiling Stan models (cmdstan's make) would choke on the space in the
+  venv path; Prophet ships a precompiled model, so do not compile.
+- After moving the repo, re-run `pip install -e . --no-deps` from `backend/`: the venv's
+  editable install stores the absolute source path.
 - `DATABASE_URL` unset = SQLite at `backend/meridian.db`. `TEST_DATABASE_URL` (env or
   repo-root `.env`, gitignored) pointing at PostgreSQL runs the whole suite there plus the
   cross-dialect tests; unset, those tests are skipped (never delete them). The PG fixture
-  drops only this project's tables, never the schema.
+  drops only this project's tables, never the schema. The file must be named exactly
+  `.env`: Notepad's `.env.txt` is neither read by the app nor covered by `.gitignore`.
 
 ## Design rules established in phase 1
 
