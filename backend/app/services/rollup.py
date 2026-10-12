@@ -85,11 +85,14 @@ def rebuild_daily_sales(session: Session, date_from: date | None = None, date_to
         .where(~covered_by_import)
         .group_by(*aggregate_columns)
     )
+    # SQLAlchemy keeps rowcount only for UPDATE/DELETE unless asked; psycopg 3.3 resets it
+    # when the cursor closes, so without preserve_rowcount this reads -1 on PostgreSQL.
     inserted = session.execute(
         insert(DailySales).from_select(
             ["date", "product_id", "region_id", "channel", "units", "revenue_minor", "order_count", "source"],
             aggregate,
-        )
+        ),
+        execution_options={"preserve_rowcount": True},
     ).rowcount
 
     skipped = session.scalar(

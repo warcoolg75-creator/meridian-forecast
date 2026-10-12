@@ -5,11 +5,13 @@ demand for the next 1–26 weeks, is warned when a peak season is approaching, a
 that into a production plan.
 
 The project is built in 10 phases. Build only what the current phase asks for.
+Phase 1 is closed (2026-10-12); phase 2 has not started.
 
 ## Stack
 
 - Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
-- PostgreSQL 16 (SQLite fallback via env var)
+- PostgreSQL 17.11, the hosted version everything is verified against (SQLite fallback
+  via env var)
 - pandas / numpy for data work
 
 ## Conventions
@@ -35,7 +37,7 @@ The project is built in 10 phases. Build only what the current phase asks for.
 ## Environment notes
 
 - **No Docker, no docker-compose.** There is no Docker on the dev machine; ignore any
-  earlier assumption of a docker-compose stack. Local dev runs on SQLite; PostgreSQL 16
+  earlier assumption of a docker-compose stack. Local dev runs on SQLite; PostgreSQL 17
   is exercised against a hosted database (Neon/Supabase) via `TEST_DATABASE_URL`.
 - The virtualenv lives outside the repo (`%USERPROFILE%\.virtualenvs\meridian`, the
   Makefile's `VENV`). With Windows long paths disabled, Prophet (phase 5) cannot be
@@ -60,6 +62,20 @@ The project is built in 10 phases. Build only what the current phase asks for.
   cross-dialect tests; unset, those tests are skipped (never delete them). The PG fixture
   drops only this project's tables, never the schema. The file must be named exactly
   `.env`: Notepad's `.env.txt` is neither read by the app nor covered by `.gitignore`.
+- The hosted test database is Supabase, reached through the **session pooler** in
+  ap-south-1 (port 5432). Do not switch to the direct endpoint: it is IPv6-only on the
+  free tier and does not resolve from the dev network. `SELECT version()` (2026-10-11):
+  `PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit`.
+  That is the target version (it replaced the original PostgreSQL 16 target, which was
+  never verified). Collation is `en_US.UTF-8` while SQLite compares
+  bytes, so `ORDER BY` on strings can differ between the two once codes put punctuation
+  in different positions; today's SKUs and region codes sort identically.
+- That database is also the PG fixture's scratch space: with `.env` present, `make test`
+  drops and recreates the tables, wiping anything `make seed` put there. The full suite
+  takes ~7-9 min there. `make seed` against it is network-bound: 58-148 s measured over
+  Wi-Fi (vs ~10-13 s on SQLite), and one run lost its connection mid-insert (the seed is
+  one transaction, so it rolled back cleanly; rerun it). The pinned dataset takes
+  ~106 MB of the free tier's 500 MB.
 
 ## Design rules established in phase 1
 
@@ -82,3 +98,21 @@ The project is built in 10 phases. Build only what the current phase asks for.
   phase 5 whether to score shock days or mask them.
 - Festival dates come from the `holidays` package; the only hardcoded (unverified) ones
   are Dhanteras in `app/seed/festivals.py`.
+- Row-level security: migration 0002 enables RLS on every table on PostgreSQL (no-op on
+  SQLite), without FORCE and without policies, so Supabase's Data API roles (`anon`,
+  `authenticated`) see no rows while the app, connecting as the tables' owner, is
+  unaffected. Every migration that creates a table must enable RLS on it too;
+  `tests/test_row_level_security.py` fails on PostgreSQL otherwise.
+- Reading `.rowcount` of an INSERT needs `execution_options={"preserve_rowcount": True}`:
+  SQLAlchemy 2.1 keeps rowcount only for UPDATE/DELETE, and psycopg 3.3 resets it when
+  the cursor closes, so it reads -1 on PostgreSQL (SQLite happens to keep it).
+
+## Known issues
+
+- **`/sales/daily` deep pagination re-runs the full aggregation for every page.** Each
+  request recomputes the count and the whole GROUP BY, then OFFSETs into it. Paging
+  through the day-level sku x region x channel breakdown (207,981 rows, 21 pages of
+  10,000) took 255 s on the hosted PostgreSQL vs 31 s on SQLite (2026-10-11). Results are
+  correct; only speed suffers. Fix in phase 4, when the dashboard starts querying
+  `/sales/daily`: likely keyset pagination or a cached aggregate. Deliberately not fixed
+  in phase 1.
