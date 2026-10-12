@@ -1,0 +1,24 @@
+# Git hooks for the whole repo. Install with `make hooks` (pre-commit goes into the venv).
+# Frontend only for now. Backend hooks (e.g. ruff) are not set up yet; they would be
+# added as their own entries here.
+repos:
+  - repo: local
+    hooks:
+      - id: design-tokens
+        name: design tokens (colour values only in tokens.css)
+        entry: node frontend/scripts/check-tokens.mjs
+        language: system
+        pass_filenames: false
+        always_run: true # the no-hex rule covers every file in the repo
+      - id: frontend-eslint
+        name: frontend eslint (incl. Tailwind token rules)
+        entry: npm --prefix frontend run lint:eslint
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+      - id: frontend-prettier
+        name: frontend prettier
+        entry: npm --prefix frontend run lint:format
+        language: system
+        pass_filenames: false
+        files: ^frontend/

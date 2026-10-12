@@ -5,7 +5,8 @@ demand for the next 1–26 weeks, is warned when a peak season is approaching, a
 that into a production plan.
 
 The project is built in 10 phases. Build only what the current phase asks for.
-Phase 1 is closed (2026-10-12); phase 2 has not started.
+Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system, was
+deferred until after it and is closed (2026-10-13). Phase 2 has not started.
 
 ## Stack
 
@@ -13,6 +14,22 @@ Phase 1 is closed (2026-10-12); phase 2 has not started.
 - PostgreSQL 17.11, the hosted version everything is verified against (SQLite fallback
   via env var)
 - pandas / numpy for data work
+- Frontend (`frontend/`): React 18, React Router 7, TypeScript 6, Vite 8, Tailwind CSS 4,
+  TanStack Query 5, Recharts. These are pinned as a set: see below.
+
+## Frontend version set (pinned together; do not upgrade one alone)
+
+The versions in `frontend/package.json` depend on each other. Each pin below has a reason;
+an "obvious" upgrade of one of them breaks the set. Change one only together with what
+its reason names, and re-run `make build` and `make lint`.
+
+| Package | Pinned | Why |
+|---|---|---|
+| React, react-dom, @types/react(-dom), react-is | 18 | The version chosen for this project. React 19 is a deliberate migration (it is also what React Router 8 needs), not a routine bump. react-is is pinned to 18 so Recharts runs against the same React major. |
+| React Router | 7 | React Router 8 requires React >= 19.2.7. Upgrade it only together with React 19. |
+| TypeScript | ~6.0 | typescript-eslint (the ESLint TypeScript plugin) supports TypeScript < 6.1. TypeScript 7, or even 6.1, breaks `npm run lint`, and `npm run build` runs lint first. Hence `~6.0`, not `^6`. |
+| Vite | 8 | @vitejs/plugin-react 6 requires Vite 8. @tailwindcss/vite supports Vite up to 8: check its peer range before moving to 9. Vite 8 needs Node ^20.19 or >= 22.12 (`engines`). |
+| Tailwind CSS (+ @tailwindcss/vite) | 4 | The design system is built on Tailwind 4's `@theme`: `tokens.css` is the theme and there is no config file. Tailwind 3 has no `@theme`, so going back means a second, mirrored config. |
 
 ## Conventions
 
@@ -26,8 +43,16 @@ Phase 1 is closed (2026-10-12); phase 2 has not started.
 ## Commands (run from the repo root)
 
 - `make venv` / `make migrate` / `make seed` / `make rollup` / `make test` / `make run`
+- Frontend: `make dev` (API on :8000 plus Vite on http://127.0.0.1:5173, which proxies
+  `/api`), `make web` (Vite only), `make build` (token checks, ESLint, type check, then
+  `frontend/dist`), `make lint` (token checks, ESLint, Prettier). These run `npm ci` first
+  whenever `frontend/package-lock.json` changes. `make hooks` installs pre-commit into the
+  venv and enables `.pre-commit-config.yaml` (frontend hooks only so far).
 - On Windows `make` is not on PATH: use `C:\msys64\usr\bin\make.exe`, or run the
-  wrapped command directly, e.g. `cd backend && python -m app.cli seed`.
+  wrapped command directly, e.g. `cd backend && python -m app.cli seed`. Run it from
+  PowerShell (see the PATH note under Environment notes for the frontend targets).
+- With `.env` present, `make test` runs against the hosted PostgreSQL (and wipes its
+  seeded data). For a SQLite-only run: `$env:TEST_DATABASE_URL = 'sqlite-only-run'` first.
 - `make seed` always regenerates the **pinned dataset**: seed 42, history
   2023-10-09..2026-10-08 (`SEED` / `END_DATE` in the Makefile, `DEFAULT_SEED` /
   `DEFAULT_END_DATE` in `backend/app/seed/ground_truth.py`; a test keeps them in sync).
@@ -39,6 +64,15 @@ Phase 1 is closed (2026-10-12); phase 2 has not started.
 - **No Docker, no docker-compose.** There is no Docker on the dev machine; ignore any
   earlier assumption of a docker-compose stack. Local dev runs on SQLite; PostgreSQL 17
   is exercised against a hosted database (Neon/Supabase) via `TEST_DATABASE_URL`.
+- **On Windows the frontend make targets prepend MSYS's `/usr/bin` to PATH, so npm
+  resolves.** Make run from PowerShell inherits the Windows PATH, which lacks
+  `C:\msys64\usr\bin`. npm's launcher in `C:\Program Files\nodejs` is a bash script
+  (`#!/usr/bin/env bash`), so without bash on PATH every npm recipe died with make's
+  "Error 127" (command not found). The Makefile sets `export PATH := /usr/bin:$(PATH)` for
+  `dev`, `web`, `build`, `lint` and the `npm ci` stamp target, on Windows only: on Linux
+  or macOS the prepend could shadow a newer Node (e.g. from nvm). Backend targets do not
+  need it because they call the venv's Python by absolute path. Do not remove it because
+  `npm` works in your own shell: that shell has a different PATH from make's.
 - The virtualenv lives outside the repo (`%USERPROFILE%\.virtualenvs\meridian`, the
   Makefile's `VENV`). With Windows long paths disabled, Prophet (phase 5) cannot be
   installed into a venv inside this folder: its deepest file path exceeds 260 chars.
@@ -106,6 +140,60 @@ Phase 1 is closed (2026-10-12); phase 2 has not started.
 - Reading `.rowcount` of an INSERT needs `execution_options={"preserve_rowcount": True}`:
   SQLAlchemy 2.1 keeps rowcount only for UPDATE/DELETE, and psycopg 3.3 resets it when
   the cursor closes, so it reads -1 on PostgreSQL (SQLite happens to keep it).
+
+## Design system (frontend)
+
+- **Tokens live in one file, `frontend/src/styles/tokens.css`**: a Tailwind 4
+  `@theme static` block, with no `tailwind.config`. Each variable is both a CSS custom
+  property and the source of a utility: `--color-maroon-500` -> `bg-maroon-500`,
+  `--text-step-2` -> `text-step-2`, `--spacing-4` -> `p-4`, `--radius-card` ->
+  `rounded-card`, `--shadow-rest` -> `shadow-rest`.
+- **No hex codes outside tokens.css**, anywhere in the repo (CLAUDE.md included). Frontend
+  code outside it may not use colour functions either: new colours are derived in
+  tokens.css by mixing palette colours, never invented. `frontend/scripts/check-tokens.mjs`
+  enforces both.
+- **Maroon means primary action or brand, never "bad".** Errors, losses, shortfalls and
+  destructive actions are clay.
+- **Sage, amber and clay carry positive, warning and negative**, and nothing else: not
+  decoration, not chart categories.
+- **Contrast rule (WCAG AA, normal-size text needs 4.5:1 against cream-50):** ink-400
+  (3.33:1) and amber-600 (3.68:1) fail and must never be used for readable text.
+  - ink-400 is for placeholders (never the only label), disabled text, control borders
+    (it meets the 3:1 a control outline needs) and decorative icons.
+  - amber-600 is for warning icons, status dots, borders, and badge fills that carry no
+    text. Text on a solid amber-600 fill fails with every palette colour (cream-50
+    3.68:1, ink-900 4.39:1), so warning badges are the amber-100 tint with amber-800 text
+    and an amber-600 dot.
+  - **Warning text uses `text-warning-text`: amber-800 (6.16:1),** amber-600 mixed 65%
+    with ink-900 in tokens.css. On the amber-100 tint it is 5.39:1.
+  - maroon-300 (3.85:1), maroon-100, the creams and the -100 tints fail as text too. Only
+    colours marked "AA pass" on `/styleguide` may carry readable text.
+- **Components use the semantic aliases** (`bg-canvas`, `bg-surface`, `border-line`,
+  `border-line-strong`, `text-fg`, `text-fg-muted`, `bg-primary`, `text-positive`,
+  `text-warning-text`, `text-negative`, ...). Raw palette names are for the styleguide and
+  rare one-offs.
+- **Off-palette or off-scale fails the build.** tokens.css resets Tailwind's default
+  colours, fonts, weights, text sizes, leading, spacing, radii and shadows, so only token
+  utilities exist. Tailwind silently ignores unknown classes, so ESLint
+  (`better-tailwindcss/no-unknown-classes`) makes them errors. It also bans arbitrary
+  values (`p-[13px]`, `bg-(--x)`) and inline `style` props; the styleguide is the one
+  exception for `style`, because it renders tokens discovered at runtime. `npm run build`
+  runs check-tokens and ESLint before Vite.
+- Type: Fraunces for headings (h1-h4 get it by default) and Inter for body text and every
+  number. **Every number shown as data uses the `figure` utility** (Inter, tabular lining
+  figures, even inside a heading): KPIs, deltas, table cells, axis labels. Tables, inputs,
+  `output`, `data` and `time` get tabular figures by default. Prose does not: Inter's
+  tabular feature also widens the hyphen to digit width, which opens gaps in words like
+  "cream-50". Sizes are named steps only: `text-step-n2` (12px), `text-step-n1` (14px), `text-step-0` (16px body),
+  then `text-step-1` to `text-step-5`, which scale between a 360px and a 1440px viewport.
+- Spacing is a 4px scale: steps 0-6, 8, 10, 12, 16, 20 and 24 (`p-4` = 16px), nothing in
+  between. Radius: `rounded-control` 6px (buttons, inputs), `rounded-card` 8px,
+  `rounded-full`. Shadows: `shadow-rest`, `shadow-raised` and `shadow-overlay`, tinted
+  from ink-900 at 4-12% opacity.
+- Cards are `<Card>`: cream-50 surface, cream-200 hairline, `shadow-rest`. There is no
+  white in the palette.
+- `/styleguide` (lazy-loaded, linked from nowhere) renders every token from the live
+  stylesheet with its contrast verdict. Check it before a page uses a new token.
 
 ## Known issues
 

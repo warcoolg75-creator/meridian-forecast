@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Numbers shown as data line up in columns. Not set on all text: Inter's tabular
+   * feature also widens the hyphen to digit width, which opens gaps in prose
+   * ("cream - 50"). Anything else that displays a number uses the `figure` utility.
+   */
+  table,
+  input,
+  textarea,
+  output,
+  data,
+  time {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  body {
+    font-size: var(--text-step-0);
+    line-height: var(--text-step-0--line-height);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-semibold);
+    font-optical-sizing: auto;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-line);
+  }
+
+  ::placeholder {
+    color: var(--color-fg-subtle);
+    opacity: 1;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-subtle);
+    color: var(--color-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Every number shown as data (KPIs, deltas, table cells, axis labels): Inter with tabular
+   figures, even when it sits inside a Fraunces heading. */
+@utility figure {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums lining-nums;
+}

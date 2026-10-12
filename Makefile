@@ -27,7 +27,7 @@ SEED_ARGS ?=
 ROLLUP_ARGS ?=
 PYTEST_ARGS ?=
 
-.PHONY: venv migrate seed rollup test run
+.PHONY: venv migrate seed rollup test run dev web build lint hooks
 
 venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
@@ -48,3 +48,37 @@ test:  ## run pytest; set TEST_DATABASE_URL to a disposable PostgreSQL DB to inc
 
 run:  ## start the API on http://127.0.0.1:8000 (docs at /docs)
 	cd backend && "$(PYTHON)" -m uvicorn app.main:app --reload
+
+# ---- Frontend (frontend/, Node >= 22.12). `npm ci` reruns whenever the lockfile changes.
+
+FRONTEND_DEPS := frontend/node_modules/.package-lock.json
+PRE_COMMIT_VERSION ?= 4.6.2
+
+ifeq ($(OS),Windows_NT)
+# Run from PowerShell, make's shell inherits the Windows PATH, which lacks MSYS's /usr/bin.
+# npm's launcher is a bash script (#!/usr/bin/env bash), so it needs bash from there.
+FRONTEND_PATH := /usr/bin:$(PATH)
+else
+FRONTEND_PATH := $(PATH)
+endif
+$(FRONTEND_DEPS) dev web build lint: export PATH := $(FRONTEND_PATH)
+
+$(FRONTEND_DEPS): frontend/package.json frontend/package-lock.json
+	cd frontend && npm ci
+	touch $(FRONTEND_DEPS)
+
+dev: $(FRONTEND_DEPS)  ## the API (:8000) and Vite (http://127.0.0.1:5173) together
+	$(MAKE) -j2 run web
+
+web: $(FRONTEND_DEPS)  ## Vite dev server only; it proxies /api to the API on :8000
+	cd frontend && npm run dev
+
+build: $(FRONTEND_DEPS)  ## token checks, ESLint and type check, then the bundle in frontend/dist
+	cd frontend && npm run build
+
+lint: $(FRONTEND_DEPS)  ## frontend: token checks, ESLint (incl. Tailwind token rules), Prettier
+	cd frontend && npm run lint
+
+hooks:  ## install pre-commit into the venv and enable the git hooks (.pre-commit-config.yaml)
+	"$(PYTHON)" -m pip install "pre-commit==$(PRE_COMMIT_VERSION)"
+	"$(PYTHON)" -m pre_commit install

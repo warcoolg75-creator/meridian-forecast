@@ -12,3 +12,7 @@ backend/*.db-wal
 
 # Machine-specific (absolute venv path)
 .claude/
+
+# Frontend
+node_modules/
+frontend/dist/
