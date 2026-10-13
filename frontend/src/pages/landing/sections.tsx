@@ -70,7 +70,7 @@ export function Hero() {
             </ButtonLink>
           </div>
         </Reveal>
-        <Reveal className="mx-auto w-full max-w-xl delay-100 lg:col-span-5 lg:max-w-none">
+        <Reveal className="mx-auto w-full max-w-lg delay-100 lg:col-span-5 lg:max-w-none">
           <ForecastArt className="w-full" />
         </Reveal>
       </div>
@@ -90,8 +90,9 @@ export function WhatWeDo() {
           <li key={title}>
             <Reveal className={cn("h-full", STAGGER[i])}>
               <Card className="hover-lift h-full space-y-4">
-                <span className="inline-flex size-10 items-center justify-center rounded-control bg-primary-subtle text-primary">
-                  <Icon />
+                {/* Cream on solid maroon at 32px: the icon reads at a glance (7.78:1). */}
+                <span className="inline-flex size-12 items-center justify-center rounded-control bg-primary text-on-primary">
+                  <Icon className="size-8" />
                 </span>
                 <h3 className="text-step-2">{title}</h3>
                 <p className="text-fg-muted">{body}</p>
@@ -112,10 +113,13 @@ export function HowItWorks() {
       title="How it works"
       intro="Four steps from the sales you already have to a plan you can run."
     >
-      {/* Phones: a vertical line down through the markers. md and up: a horizontal one. */}
-      <ol className="md:grid md:grid-cols-4">
+      {/* Phones: one column, a vertical line down through the markers. Tablets: 2 x 2, a
+          line joining the two steps on each row. lg and up: four across, one line. */}
+      <ol className="md:grid md:grid-cols-2 md:gap-y-12 lg:grid-cols-4 lg:gap-y-0">
         {STEPS.map(({ title, body }, i) => {
           const last = i === STEPS.length - 1;
+          // On the 2 x 2 grid the second step ends its row, so its line waits for lg.
+          const connector = i % 2 === 0 ? cn("md:block") : cn("lg:block");
           return (
             <li key={title} className={cn("relative", last ? "pb-0" : "pb-10 md:pb-0")}>
               {!last && (
@@ -133,7 +137,7 @@ export function HowItWorks() {
                   {!last && (
                     <span
                       aria-hidden="true"
-                      className="ml-3 hidden h-px flex-1 bg-primary md:block"
+                      className={cn("ml-3 hidden h-px flex-1 bg-primary", connector)}
                     />
                   )}
                 </div>

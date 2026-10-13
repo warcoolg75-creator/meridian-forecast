@@ -65,7 +65,7 @@ export default function Login() {
       <aside className="relative overflow-hidden bg-maroon-900 px-4 py-8 sm:px-6 lg:col-span-3 lg:flex lg:flex-col lg:justify-between lg:p-12">
         <ForecastArt
           tone="dark"
-          className="pointer-events-none absolute -right-16 -bottom-8 w-full max-w-3xl opacity-10 lg:top-24 lg:right-0 lg:bottom-auto lg:opacity-20"
+          className="pointer-events-none absolute -right-16 -bottom-8 w-full max-w-3xl opacity-10 lg:top-12 lg:right-0 lg:bottom-auto lg:max-w-2xl lg:opacity-20"
         />
         <Link
           to="/"

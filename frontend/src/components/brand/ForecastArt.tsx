@@ -22,11 +22,12 @@ const TONES = {
   },
 };
 
-const GRID_Y = [60, 120, 180, 240, 300];
+const GRID_Y = [70, 150, 230, 310, 390];
 
 /**
  * Decorative: a sales history that runs into today, then a dashed forecast whose
- * confidence band widens the further ahead it looks.
+ * confidence band widens the further ahead it looks. Drawn tall (520 x 460) so it holds
+ * its own beside a headline, with strokes heavy enough to read at hero size.
  */
 export function ForecastArt({
   tone = "light",
@@ -38,40 +39,40 @@ export function ForecastArt({
   const t = TONES[tone];
   return (
     <svg
-      viewBox="0 0 560 340"
+      viewBox="0 0 520 460"
       aria-hidden="true"
       focusable="false"
       fill="none"
       className={cn("h-auto", className)}
     >
       {GRID_Y.map((y) => (
-        <line key={y} x1="20" x2="540" y1={y} y2={y} strokeWidth="1" className={t.grid} />
+        <line key={y} x1="16" x2="504" y1={y} y2={y} strokeWidth="1.5" className={t.grid} />
       ))}
 
-      {/* Confidence bands: 95% (outer) and 80% (inner), opening out from today. */}
-      <path d="M300 170 Q420 130 520 40 L520 168 Q420 168 300 170 Z" className={t.outer} />
+      {/* Confidence bands, 95% (outer) and 80% (inner), opening out from today. */}
+      <path d="M270 230 Q390 160 496 30 L496 230 Q390 248 270 230 Z" className={t.outer} />
       <path
-        d="M300 170 Q420 141 520 69 L520 139 Q420 158 300 170 Z"
-        opacity="0.45"
+        d="M270 230 Q390 188 496 60 L496 180 Q390 224 270 230 Z"
+        opacity="0.55"
         className={t.inner}
       />
 
       {/* Today. */}
       <line
-        x1="300"
-        x2="300"
-        y1="30"
-        y2="310"
-        strokeWidth="1.5"
-        strokeDasharray="3 7"
+        x1="270"
+        x2="270"
+        y1="40"
+        y2="420"
+        strokeWidth="2"
+        strokeDasharray="3 8"
         strokeLinecap="round"
         className={t.today}
       />
 
       {/* History, with a weekly rhythm and a slow climb. */}
       <path
-        d="M40 262 C55 250 65 242 80 240 S100 254 110 252 S135 224 150 222 S172 234 185 232 S208 202 220 200 S245 212 255 210 S285 178 300 170"
-        strokeWidth="3"
+        d="M24 330 C40 314 50 302 60 300 S82 320 90 318 S118 284 130 282 S155 298 165 296 S195 260 205 258 S232 272 240 270 S262 240 270 230"
+        strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
         className={t.line}
@@ -79,14 +80,14 @@ export function ForecastArt({
 
       {/* Median forecast. */}
       <path
-        d="M300 170 Q420 152 520 104"
-        strokeWidth="3"
-        strokeDasharray="2 9"
+        d="M270 230 Q390 205 496 120"
+        strokeWidth="4"
+        strokeDasharray="2 11"
         strokeLinecap="round"
         className={t.line}
       />
 
-      <circle cx="300" cy="170" r="6" strokeWidth="3" className={t.dot} />
+      <circle cx="270" cy="230" r="7" strokeWidth="4" className={t.dot} />
     </svg>
   );
 }
