@@ -109,6 +109,16 @@
   --text-step-4--line-height: 1.2;
   --text-step-5: clamp(2rem, 1.6494rem + 1.5582vw, 3.0518rem); /* 32 -> 48.8px: display */
   --text-step-5--line-height: 1.1;
+  --text-step-6: clamp(2.25rem, 1.7284rem + 2.3181vw, 3.8147rem); /* 36 -> 61px: hero headline */
+  --text-step-6--line-height: 1.05;
+
+  /* ---- Letter-spacing ---- */
+  --tracking-wordmark: 0.24em; /* the MERIDIAN wordmark */
+
+  /* ---- Motion (all of it is switched off under prefers-reduced-motion) ---- */
+  --motion-duration: 300ms; /* scroll reveals and card lifts */
+  --motion-rise: 0.75rem; /* a scroll reveal starts 12px low */
+  --motion-lift: 2px; /* a card rises this far on hover */
 
   /* ---- Spacing: 4px scale (one step = 0.25rem = 4px at the default root size) ---- */
   --spacing-0: 0rem;

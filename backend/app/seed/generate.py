@@ -55,6 +55,7 @@ from app.seed.catalog import (
     TRADE_SHOWS,
 )
 from app.seed.festivals import HARDCODED_SOURCE, uncovered_hardcoded_years
+from app.seed.users import DEMO_PASSWORD, DEMO_USERS, add_demo_users
 from app.seed.ground_truth import (
     CALENDAR_HORIZON_DAYS,
     DEFAULT_END_DATE,
@@ -459,6 +460,7 @@ def generate(session: Session, *, seed: int = DEFAULT_SEED, end_date: date = DEF
         bulk_insert(session, model, ref.rows.get(model, []))
     _sync_pg_sequences(session)
     rebuild_daily_sales(session)
+    add_demo_users(session)
     session.commit()
 
     counts = {t.name: session.scalar(select(func.count()).select_from(t)) for t in Base.metadata.sorted_tables}
@@ -525,4 +527,7 @@ def format_report(report: SeedReport) -> str:
         out.append(f"{h['date']:<12}{day:%a}  {h['key']:<18}{h['name'][:33]:<34}{h['event_type']:<16}"
                    f"{h['region_code'] or '-':<8}{h['source']}{note}")
     out += [f"WARNING: {w}" for w in report.warnings]
+    out += ["", "Demo users, LOCAL DEVELOPMENT ONLY (public password; never seed a deployed database):"]
+    out += [f"  {email:<26}{role.value}" for email, _name, role in DEMO_USERS]
+    out += [f"  password for all four: {DEMO_PASSWORD}"]
     return "\n".join(out)

@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
 
@@ -6,6 +6,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   hint?: string;
   error?: string;
+  /** A control inside the field's right edge, e.g. a show/hide toggle for a password. */
+  trailing?: ReactNode;
   /** Styleguide only: render the focus state statically. */
   forcedState?: "focus";
 }
@@ -21,7 +23,16 @@ const FIELD = cn(
   "disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-muted disabled:text-fg-subtle",
 );
 
-export function Input({ label, hint, error, forcedState, id, className, ...props }: InputProps) {
+export function Input({
+  label,
+  hint,
+  error,
+  trailing,
+  forcedState,
+  id,
+  className,
+  ...props
+}: InputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const noteId = `${inputId}-note`;
@@ -31,14 +42,19 @@ export function Input({ label, hint, error, forcedState, id, className, ...props
       <label htmlFor={inputId} className="text-step-n1 font-medium text-fg">
         {label}
       </label>
-      <input
-        id={inputId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={note ? noteId : undefined}
-        data-force-focus={forcedState === "focus" || undefined}
-        className={FIELD}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={note ? noteId : undefined}
+          data-force-focus={forcedState === "focus" || undefined}
+          className={cn(FIELD, trailing ? "pr-20" : undefined)}
+          {...props}
+        />
+        {trailing && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-1">{trailing}</div>
+        )}
+      </div>
       {note && (
         <p id={noteId} className={cn("text-step-n1", error ? "text-negative" : "text-fg-muted")}>
           {note}

@@ -5,6 +5,9 @@ __pycache__/
 .venv/
 .env
 
+# Dev-only JWT signing key, generated when JWT_SECRET is unset
+backend/.jwt-secret
+
 # Local SQLite database
 backend/*.db
 backend/*.db-shm

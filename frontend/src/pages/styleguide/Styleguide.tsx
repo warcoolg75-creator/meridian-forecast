@@ -80,6 +80,7 @@ const SECTIONS = [
   ["type", "Typography"],
   ["spacing", "Spacing"],
   ["radius-shadow", "Radius and shadow"],
+  ["tracking-motion", "Letter-spacing and motion"],
   ["buttons", "Buttons"],
   ["card", "Card"],
   ["inputs", "Input"],
@@ -139,6 +140,7 @@ export default function Styleguide() {
       <TypeSection declarations={tokens.declarations} />
       <SpacingSection declarations={tokens.declarations} />
       <RadiusShadowSection declarations={tokens.declarations} />
+      <TrackingMotionSection declarations={tokens.declarations} />
       <ButtonSection />
       <CardSection />
       <InputSection />
@@ -496,6 +498,43 @@ function SpacingSection({ declarations }: { declarations: Map<string, string> })
 }
 
 // ------------------------------------------------------------------------------- radius & shadow
+
+function TrackingMotionSection({ declarations }: { declarations: Map<string, string> }) {
+  const tracking = withPrefix(declarations, "--tracking-");
+  const motion = withPrefix(declarations, "--motion-");
+  return (
+    <Section
+      id="tracking-motion"
+      title="Letter-spacing and motion"
+      intro="Letter-spacing tokens, and the motion behind scroll reveals and card lifts (all of it off under prefers-reduced-motion)."
+    >
+      <ul role="list" className="divide-y divide-line rounded-card border border-line bg-surface">
+        {[...tracking, ...motion].map(([name, value]) => (
+          <li key={name} className="grid gap-2 p-4 sm:grid-cols-3 sm:items-baseline">
+            <p className="font-mono text-step-n2 text-fg-muted">{name}</p>
+            <p className="figure text-step-n1">{pretty(value)}</p>
+            {name.startsWith("--tracking-") ? (
+              <p
+                className="font-display font-semibold text-primary"
+                style={{ letterSpacing: `var(${name})` }}
+              >
+                MERIDIAN
+              </p>
+            ) : (
+              <p className="text-step-n1 text-fg-muted">{MOTION_USE[name] ?? ""}</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+const MOTION_USE: Record<string, string> = {
+  "--motion-duration": "Scroll reveals and card lifts",
+  "--motion-rise": "How far below its place a reveal starts",
+  "--motion-lift": "How far a card rises on hover",
+};
 
 function RadiusShadowSection({ declarations }: { declarations: Map<string, string> }) {
   return (

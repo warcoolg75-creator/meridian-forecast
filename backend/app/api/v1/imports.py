@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
 
+from app.api.deps import require_role
 from app.db import get_db
-from app.schemas import ImportReport
+from app.models import UserRole
+from app.schemas import ErrorResponse, ImportReport
 from app.services.csv_import import MAX_UPLOAD_BYTES, TEMPLATE_CSV, file_too_large_report, import_sales_csv
 
 router = APIRouter(prefix="/imports", tags=["imports"])
@@ -14,7 +16,11 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 @router.post(
     "/sales",
     response_model=ImportReport,
+    # Importing overwrites sales data, so only admins and planners may do it.
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.PLANNER))],
     responses={
+        401: {"model": ErrorResponse, "description": "Not signed in"},
+        403: {"model": ErrorResponse, "description": "Role is not admin or planner"},
         413: {"model": ImportReport, "description": "File too large"},
         422: {"model": ImportReport, "description": "Validation failed; nothing was imported"},
     },

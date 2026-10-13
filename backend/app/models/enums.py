@@ -23,6 +23,13 @@ class RegionLevel(StrEnum):
     CITY = "city"
 
 
+class UserRole(StrEnum):
+    ADMIN = "admin"
+    PLANNER = "planner"
+    ANALYST = "analyst"
+    VIEWER = "viewer"
+
+
 class SalesSource(StrEnum):
     """Where a daily_sales row came from.
 

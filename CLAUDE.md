@@ -6,11 +6,14 @@ that into a production plan.
 
 The project is built in 10 phases. Build only what the current phase asks for.
 Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system, was
-deferred until after it and is closed (2026-10-13). Phase 2 has not started.
+deferred until after it and is closed (2026-10-13). Phase 2, the public brand page and
+authentication, is built (2026-10-13). Phase 3 has not started.
 
 ## Stack
 
 - Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
+- Auth: pwdlib (argon2id) and PyJWT. Not passlib: it is unmaintained and reads
+  `argon2.__version__`, which argon2-cffi has deprecated, so its argon2 support will break.
 - PostgreSQL 17.11, the hosted version everything is verified against (SQLite fallback
   via env var)
 - pandas / numpy for data work
@@ -57,7 +60,8 @@ its reason names, and re-run `make build` and `make lint`.
   2023-10-09..2026-10-08 (`SEED` / `END_DATE` in the Makefile, `DEFAULT_SEED` /
   `DEFAULT_END_DATE` in `backend/app/seed/ground_truth.py`; a test keeps them in sync).
   Same bytes every run, every day. `make seed END_DATE=...` exists only for deliberate
-  regeneration, after which the new `ground_truth.json` must be committed.
+  regeneration, after which the new `ground_truth.json` must be committed. It also creates
+  the four demo users (one per role, public password; see the auth rules below).
 
 ## Environment notes
 
@@ -194,6 +198,46 @@ its reason names, and re-run `make build` and `make lint`.
   white in the palette.
 - `/styleguide` (lazy-loaded, linked from nowhere) renders every token from the live
   stylesheet with its contrast verdict. Check it before a page uses a new token.
+- Phase-2 tokens: `text-step-6` (hero headline, 36 to 61px), `tracking-wordmark` (the
+  letterspaced MERIDIAN), and the motion tokens behind the `reveal` (fade and rise on scroll,
+  via `<Reveal>`) and `hover-lift` utilities: 300ms, 12px rise, 2px lift. All motion is
+  off under prefers-reduced-motion.
+- On dark (maroon-900) surfaces the default maroon focus ring is invisible (1.87:1). Add
+  `focus-visible:outline-cream-50` to every focusable element there.
+
+## Authentication rules established in phase 2
+
+- Access token: 15 minutes, sent as `Authorization: Bearer`, held only in client memory
+  (`frontend/src/auth/tokenStore.ts`), never in localStorage, sessionStorage or a readable
+  cookie. Refresh token: 7 days, in the `meridian_refresh` cookie (httpOnly, Secure,
+  SameSite=Lax, Path=/api/v1/auth). "Remember me" makes it a persistent cookie; otherwise
+  it is a browser-session cookie.
+- Refresh tokens rotate: each one works once (`refresh_tokens` table, by JWT id). A used
+  or revoked token presented again revokes its whole sign-in family. Sign-out revokes the
+  family; changing a password revokes every family and issues a fresh one.
+- Failed sign-ins share one message ("Email or password is incorrect.") for an unknown
+  email, a wrong password and an inactive account. An unknown email is still verified
+  against `DUMMY_PASSWORD_HASH`, at the same argon2 cost, so timing reveals nothing either.
+  A test asserts that path runs; keep it when touching `authenticate()`.
+- Login rate limit: 5 failures per (client IP, email) per sliding 15 minutes, then 429
+  with Retry-After. Unknown emails are limited too. A success resets the count. See
+  Known issues.
+- Roles: `require_role(*roles)` in `app/api/deps.py` (401 signed out, 403 wrong role).
+  `POST /api/v1/imports/sales` is admin and planner only; read endpoints are still public.
+  On the frontend `<RequireAuth roles=...>` mirrors this: `/app/planning` is admin and
+  planner only.
+- `JWT_SECRET` signs the tokens. Unset, a dev-only key is generated once into
+  `backend/.jwt-secret` (gitignored). Tests set a fixed key in `conftest.py`.
+- All timestamps use `UTCDateTime` (`app/models/base.py`): aware UTC on both dialects;
+  writing a naive datetime raises.
+- Demo users (`app/seed/users.py`) exist only through `make seed`, with a public password.
+  The login page's "Use demo account" buttons are behind `import.meta.env.DEV`; the
+  production bundle was checked to contain neither the buttons nor the password.
+- Frontend: `refreshSession()` is single-flight, because two parallel refreshes would
+  look like a replayed token (React StrictMode runs the start-up effect twice in dev).
+  `apiFetch()` retries once after a 401. `AuthProvider` stays "loading" until the start-up
+  refresh answers, so a reload never flashes the login page.
+- Backend tests use `https://testserver`, because httpx withholds Secure cookies over http.
 
 ## Known issues
 
@@ -204,3 +248,16 @@ its reason names, and re-run `make build` and `make lint`.
   correct; only speed suffers. Fix in phase 4, when the dashboard starts querying
   `/sales/daily`: likely keyset pagination or a cached aggregate. Deliberately not fixed
   in phase 1.
+- **The login rate limiter is in-memory, per process** (`app/services/rate_limit.py`). It
+  is correct for one uvicorn process. A restart clears every count, and several workers
+  would each keep their own, multiplying the effective limit by the worker count. Running
+  more than one process needs a shared store keyed by (client IP, email) with atomic
+  increments and expiry: Redis, or a database table. Related: the "client IP" is the
+  direct peer, so behind a reverse proxy every visitor shares the proxy's IP unless
+  uvicorn trusts the forwarded headers (`--proxy-headers --forwarded-allow-ips`).
+- Two browser tabs that refresh the same session at the same moment present the same
+  refresh token twice, which looks like a replay and signs the user out. The single-flight
+  guard only covers one tab. Fix if it bites: a short grace window for a just-used token,
+  or cross-tab coordination (BroadcastChannel).
+- An anonymous page load shows one 401 in the browser console: the start-up
+  `/auth/refresh` call with no cookie. It is expected, not an error.

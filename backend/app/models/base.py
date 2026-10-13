@@ -1,4 +1,5 @@
 import enum
+from datetime import UTC, datetime
 
 import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase
@@ -31,3 +32,31 @@ def enum_type(enum_cls: type[enum.Enum], name: str) -> sa.Enum:
         validate_strings=True,
         values_callable=lambda cls: [member.value for member in cls],
     )
+
+
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+class UTCDateTime(sa.TypeDecorator[datetime]):
+    """A timestamp that is timezone-aware UTC on every dialect.
+
+    PostgreSQL stores timestamptz; SQLite has no time zone type and hands back naive
+    values. Writes must be aware (naive input is a bug and raises); reads are always
+    aware UTC, so comparisons behave the same on both databases.
+    """
+
+    impl = sa.DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect: sa.Dialect) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            raise ValueError("UTCDateTime needs a timezone-aware datetime")
+        return value.astimezone(UTC)
+
+    def process_result_value(self, value: datetime | None, dialect: sa.Dialect) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)

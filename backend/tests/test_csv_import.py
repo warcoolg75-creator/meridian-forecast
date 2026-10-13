@@ -1,11 +1,15 @@
-"""POST /api/v1/imports/sales and GET /api/v1/imports/sales/template."""
+"""POST /api/v1/imports/sales and GET /api/v1/imports/sales/template.
+
+The import requires an admin or planner (the role guard itself is tested in
+test_auth.py); every test here signs the client in as a planner.
+"""
 
 from datetime import date, timedelta
 
 import pytest
 import sqlalchemy as sa
 
-from app.models import DailySales
+from app.models import DailySales, UserRole
 from app.services.csv_import import COLUMNS
 from app.services.rollup import rebuild_daily_sales
 from tests.conftest import add_daily, add_order
@@ -14,6 +18,11 @@ HEADER = "date,sku,region_code,channel,units,revenue"
 GOOD_1 = "2025-01-15,FDS-GFB-1KG,IN-DL-NDL,retail,12,14388.00"
 GOOD_2 = "2025-01-15,IND-BRG-6205,IN-MH-PUN,distributor,400,60680.5"
 TOMORROW = (date.today() + timedelta(days=2)).isoformat()
+
+
+@pytest.fixture(autouse=True)
+def _signed_in_as_planner(client, auth_headers):
+    client.headers.update(auth_headers(UserRole.PLANNER))
 
 
 def upload(client, text: str | bytes):

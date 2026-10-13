@@ -1,3 +1,4 @@
+from app.schemas.auth import ChangePasswordRequest, LoginRequest, SessionResponse, SignedOutResponse, UserRead
 from app.schemas.catalog import ProductRead
 from app.schemas.common import ErrorResponse, Page
 from app.schemas.events import CalendarEventRead
@@ -20,6 +21,7 @@ from app.schemas.sales import (
 
 __all__ = [
     "CalendarEventRead",
+    "ChangePasswordRequest",
     "CustomerRead",
     "DailySalesRead",
     "ErrorResponse",
@@ -27,6 +29,7 @@ __all__ = [
     "ImportRowError",
     "InventoryRead",
     "LineCapabilityRead",
+    "LoginRequest",
     "Page",
     "PlantRead",
     "ProductRead",
@@ -37,4 +40,7 @@ __all__ = [
     "SalesOrderLineRead",
     "SalesOrderRead",
     "SalesPeriod",
+    "SessionResponse",
+    "SignedOutResponse",
+    "UserRead",
 ]

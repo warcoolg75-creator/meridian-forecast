@@ -1,5 +1,18 @@
-import { PlaceholderPage } from "../components/PlaceholderPage";
+import { SiteFooter } from "./landing/SiteFooter";
+import { SiteHeader } from "./landing/SiteHeader";
+import { Hero, HowItWorks, OurGoals, WhatWeDo } from "./landing/sections";
 
 export default function Landing() {
-  return <PlaceholderPage title="Meridian Forecast" />;
+  return (
+    <>
+      <SiteHeader />
+      <main>
+        <Hero />
+        <WhatWeDo />
+        <HowItWorks />
+        <OurGoals />
+      </main>
+      <SiteFooter />
+    </>
+  );
 }

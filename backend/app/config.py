@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     # Tests only: a disposable PostgreSQL database for the PG / cross-dialect tests.
     test_database_url: str = ""
 
+    # Signs the JWTs. Set JWT_SECRET anywhere shared or deployed; when it is empty a
+    # dev-only key is generated once into backend/.jwt-secret (gitignored).
+    jwt_secret: str = ""
+    access_token_minutes: int = 15
+    refresh_token_days: int = 7
+
 
 @lru_cache
 def get_settings() -> Settings:

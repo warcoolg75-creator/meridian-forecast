@@ -7,8 +7,12 @@ dropped and recreated, so it must not hold anything you want to keep in them.
 """
 
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import date
+
+# A fixed key for the test session, set before the app reads its settings, so no test
+# ever writes backend/.jwt-secret.
+os.environ.setdefault("JWT_SECRET", "test-only-jwt-signing-key-0123456789abcdef")
 
 import pytest
 import sqlalchemy as sa
@@ -29,8 +33,13 @@ from app.models import (
     Region,
     SalesOrder,
     SalesOrderLine,
+    User,
+    UserRole,
 )
+from app.models.base import utcnow
 from app.seed.generate import wipe_all
+from app.services.auth import create_access_token, hash_password
+from app.services.rate_limit import login_limiter
 
 PG_URL = os.environ.get("TEST_DATABASE_URL") or get_settings().test_database_url
 HAS_PG = PG_URL.startswith("postgres")
@@ -94,9 +103,42 @@ def db(engine) -> Iterator[Session]:
 @pytest.fixture
 def client(db) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = lambda: db
-    with TestClient(app) as test_client:
+    # https: the refresh cookie is Secure, and the client (rightly) only sends it back over https.
+    with TestClient(app, base_url="https://testserver") as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _fresh_login_limiter() -> Iterator[None]:
+    login_limiter.clear()
+    yield
+    login_limiter.clear()
+
+
+TEST_PASSWORD = "correct horse battery staple"
+
+
+@pytest.fixture
+def make_user(db) -> Callable[..., User]:
+    """Factory: an active user with TEST_PASSWORD unless told otherwise."""
+    def make(email: str = "planner@example.com", role: UserRole = UserRole.PLANNER,
+             password: str = TEST_PASSWORD, is_active: bool = True) -> User:
+        user = User(email=email, full_name=f"Test {role.value}", role=role,
+                    password_hash=hash_password(password), is_active=is_active)
+        db.add(user)
+        db.commit()
+        return user
+    return make
+
+
+@pytest.fixture
+def auth_headers(make_user) -> Callable[[UserRole], dict[str, str]]:
+    """Factory: an Authorization header for a fresh user with the given role."""
+    def headers(role: UserRole) -> dict[str, str]:
+        user = make_user(email=f"{role.value}@example.com", role=role)
+        return {"Authorization": f"Bearer {create_access_token(user, utcnow())}"}
+    return headers
 
 
 # --------------------------------------------------------------------------- data builders

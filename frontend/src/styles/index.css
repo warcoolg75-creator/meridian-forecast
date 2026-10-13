@@ -3,6 +3,7 @@
 
 @layer base {
   html {
+    scroll-behavior: smooth;
     background-color: var(--color-canvas);
     color: var(--color-fg);
     font-family: var(--font-sans);
@@ -56,6 +57,51 @@
   :focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Fade and rise into view. <Reveal> sets data-revealed when the element scrolls in.
+   Longhand transition properties, so delay-* utilities can stagger a group. */
+@utility reveal {
+  opacity: 0;
+  transform: translateY(var(--motion-rise));
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-duration);
+  transition-timing-function: ease-out;
+
+  &[data-revealed] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+    transform: none;
+    transition-property: none;
+  }
+}
+
+/* Cards rise 2px and deepen their shadow on hover. */
+@utility hover-lift {
+  transition-property: transform, box-shadow;
+  transition-duration: var(--motion-duration);
+  transition-timing-function: ease-out;
+
+  &:hover {
+    transform: translateY(calc(-1 * var(--motion-lift)));
+    box-shadow: var(--shadow-raised);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
   }
 }
 
