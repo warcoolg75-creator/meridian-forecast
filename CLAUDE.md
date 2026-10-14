@@ -7,7 +7,8 @@ that into a production plan.
 The project is built in 10 phases. Build only what the current phase asks for.
 Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system, was
 deferred until after it and is closed (2026-10-13). Phase 2, the public brand page and
-authentication, is built (2026-10-13). Phase 3 has not started.
+authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI component
+library, is built (2026-10-13). Phase 4 has not started.
 
 ## Stack
 
@@ -204,6 +205,123 @@ its reason names, and re-run `make build` and `make lint`.
   off under prefers-reduced-motion.
 - On dark (maroon-900) surfaces the default maroon focus ring is invisible (1.87:1). Add
   `focus-visible:outline-cream-50` to every focusable element there.
+- Phase-3 tokens: `--color-series-1..3` and `--color-band` (see Chart rules), and
+  `--color-scrim` (ink-900 at 40%, behind the drawer). `--size-chart-sm/md/lg` (192, 288,
+  384px) and `--size-scroll-list/table` (240, 480px) are **not spacing**: they generate
+  only `h-chart-*` and `max-h-scroll-*`, custom `@utility` rules in `index.css`, because
+  the spacing scale stops at 96px and Tailwind has no height scale. Do not add large
+  steps to `--spacing-*` instead. Motion utilities `slide-over` (the drawer) and `fade-in`
+  (toasts) use the motion tokens and are off under prefers-reduced-motion.
+- Words where figures default to tabular (tables, chart category axes) take
+  `normal-nums`: tabular figures widen the hyphen in "FX-015" or "Non-stick".
+- `/styleguide` composites translucent tokens (band, scrim) over cream-50 before
+  measuring contrast; it used to measure the opaque colour.
+
+## Chart rules (phase 3)
+
+- **Maroon is the primary series.** Further series use the measured slots below and ink,
+  never new hues.
+- **A confidence band is maroon at low opacity** (`--color-band`, maroon-500 at 14%),
+  never a second colour.
+- **Never colour a data series sage, amber or clay**: those mean good, warning and bad,
+  not identity.
+- **Every axis is labelled with its unit, and every chart has an accessible
+  description.** In the components both are required props, and every chart also
+  renders its plotted values as a visually hidden table, so a screen reader can read
+  the numbers, not just the summary.
+
+**The series palette is measured, not chosen, and it has exactly three slots.** In order:
+series-1 maroon-500, series-2 ink-400, series-3 maroon-900. Measured 2026-10-13 with the
+dataviz skill's `validate_palette.js`: ΔE is Euclidean distance in OKLab x100, colour
+blindness is simulated with Machado-Oliveira-Fernandes 2009 at severity 1.0, against
+cream-50. Target ΔE >= 8 under simulation (6 is a floor that needs secondary encoding)
+and >= 15 with normal vision (a hard floor). Lines and grouped bars can put any two
+series side by side, so every pair counts:
+
+| Pair | Worst simulated ΔE | Normal vision ΔE | Verdict |
+|---|---|---|---|
+| maroon-500 / ink-400 | 18.1 (deuteranopia) | 22.0 | pass |
+| ink-400 / maroon-900 | 34.9 (deuteranopia) | 36.1 | pass |
+| maroon-500 / maroon-900 | 14.7 (protanopia) | 17.1 | pass (the worst pair of the three) |
+| maroon-300 / ink-400 | **2.1** (deuteranopia) | **9.2** | fail: indistinguishable |
+| maroon-500 / ink-600 | **1.9** (deuteranopia) | **11.2** | fail: indistinguishable |
+
+Contrast against cream-50, for marks (3:1 needed): maroon-500 7.78, ink-400 3.33,
+maroon-900 14.53. (maroon-300 is 3.85 and ink-600 7.28; contrast was never their problem.)
+
+What this rules out, so no later session "helpfully" adds it:
+- **No lighter maroon tint as a series.** It was the original instruction ("derived
+  maroon tints and ink") and it is wrong: maroon-300 cannot be told apart from ink-400
+  under deuteranopia (ΔE 2.1) and barely with normal vision (9.2). Any tint light enough
+  to differ from maroon-500 lands on ink-400's lightness. It fails whatever its slot,
+  because every pair counts.
+- **No ink-600 as a series**: it collapses into maroon-500 under deuteranopia (ΔE 1.9).
+- **No fourth series.** There is no fourth colour that separates from all three.
+  `TimeSeriesChart` and `BarChart` render an error state ("Too many series: 4") instead
+  of drawing; `/styleguide/components` shows it. Fold small series into "Other", or use
+  separate charts.
+- The validator also flags its lightness-band and chroma checks for this palette: ink is
+  grey and maroon-900 is dark by design. That is the cost of maroon-and-ink only, and the
+  reason identity never rests on colour alone: a legend whenever there are two or more
+  series, the tooltip, and the hidden data table.
+- Re-run the validator for any palette change, with all pairs (`--pairs all`), and
+  update this table.
+
+Mark specs (`components/charts/`): 2px lines, the forecast dashed (6 4) after a solid
+ink-400 divider at the last actual period (the dashed line and the band start from that
+point so they join up); bars at most 24px thick with 4px rounded ends, 2px apart in a
+group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers and dates,
+`normal-nums` for category words; axis titles as HTML above (vertical axis) and below
+(horizontal axis) the plot. Compact ticks use three significant digits (2,250 is
+"2.25K", not a rounded "2.3K"). Recharts animations are off under prefers-reduced-motion
+(`usePrefersReducedMotion`).
+
+## App shell and component library (phase 3)
+
+- **Shell** (`components/shell/`): below 768px a top bar whose hamburger opens a
+  slide-over drawer (a modal `<dialog>`: focus trap, Escape and focus return come from
+  the browser); 768-1023px an icons-only rail with labels as tooltips on hover and
+  keyboard focus; from 1024px the full sidebar, collapsible. The collapse choice is
+  stored per browser in localStorage `meridian.sidebar.collapsed`, every access in
+  try/catch, expanded when storage is unavailable; it applies only from 1024px.
+- **Focus after mouse use.** `:focus-visible` alone is not enough: browsers turn it on
+  for whatever is focused as soon as any key is pressed (a screenshot shortcut will do),
+  so a nav link clicked with the mouse later showed a full maroon box. So: AppLayout
+  moves focus to `<main>` after every navigation (named by the page's h1,
+  `#page-title`; the first load never moves focus); controls that stay on the page
+  release focus after a pointer click (`isPointerClick`, `lib/pointer.ts`; a
+  keyboard-fired click has `detail` 0); the drawer opens with focus on its panel and,
+  closed with the mouse, does not hand focus back to the hamburger. Keyboard use keeps
+  every ring. Every focus style in the shell is `focus-visible:`, the skip link's too;
+  do not add `focus:` ones.
+- Who sees Planning comes from one constant, `PLANNING_ROLES` (`auth/roles.ts`), read by
+  both the route guard and the nav (`shell/nav.ts`). Add new role-gated sections the
+  same way.
+- Breadcrumbs come from route `handle: { crumb }` (`useMatches`); give every new route
+  one. Every `/app` page renders inside `<PageScaffold title subtitle actions>`, which
+  also sets the tab title.
+- **Data components take `isLoading`, `error` and `onRetry`** (TanStack Query's
+  `isPending`, `error`, `refetch`) and detect empty data themselves. Charts go through
+  `ChartFrame`, which never draws axes without data and keeps the plot's height (and the
+  axis titles' lines) in every state, so nothing jumps when data arrives.
+- **`sr-only` goes on a wrapper, never on a `<table>`**: a table ignores the 1px width
+  and grows to its content. The hidden chart tables did this and made the page 1157px
+  wide at 360px.
+- **Popover blur**: closing on blur must ignore a null `relatedTarget`. Clicking a label
+  or padding inside the panel drops focus to `<body>`, and treating that as "left" closed
+  the date picker before "Custom range" could open (clicks outside are handled by the
+  pointerdown listener).
+- `KpiCard`: the arrow shows direction, the colour whether it is good; `upIsGood={false}`
+  for stockouts, returns, forecast error. Anything that rounds to 0.0% is flat (ink).
+- `DataTable` is controlled (sort, page); `useClientTable` does both in the browser for
+  rows already loaded. Server paging for `/sales/daily` passes its own state in.
+- `FilterBar` owns no data: options in, a complete `Filters` object out. An empty list
+  means all. Date presets count back from `asOf`, the last day with data, not today.
+- Formatting lives in `lib/format.ts` (en-IN grouping, paise to rupees) and
+  `lib/dates.ts` (ISO dates, UTC arithmetic and display).
+- `/styleguide/components` shows every component in every state on
+  `pages/styleguide/fixtures.ts`: invented data, products with "FX-" SKUs, marked as
+  fixtures on the page. Only the styleguide may import it.
 
 ## Authentication rules established in phase 2
 

@@ -79,6 +79,21 @@
   --color-negative: var(--color-clay-600);
   --color-negative-hover: var(--color-clay-700);
   --color-negative-subtle: var(--color-clay-100);
+  /* Behind the navigation drawer. */
+  --color-scrim: color-mix(in srgb, var(--color-ink-900) 40%, transparent);
+
+  /*
+   * ---- Chart series: identity only, never status ----
+   * Measured with a colour-vision simulation, not picked by eye: CLAUDE.md ("Chart
+   * rules") has the numbers. Exactly three slots, in this order. Do not add a fourth,
+   * and do not swap in a lighter maroon tint: maroon-300 is indistinguishable from
+   * ink-400 under deuteranopia (ΔE 2.1). A fourth series is an error state.
+   */
+  --color-series-1: var(--color-maroon-500);
+  --color-series-2: var(--color-ink-400);
+  --color-series-3: var(--color-maroon-900);
+  /* Confidence band: the primary series' maroon as a wash, never a second colour. */
+  --color-band: color-mix(in srgb, var(--color-maroon-500) 14%, transparent);
 
   /* ---- Type: Fraunces for headings, Inter for body and every number ---- */
   --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
@@ -134,6 +149,16 @@
   --spacing-16: 4rem;
   --spacing-20: 5rem;
   --spacing-24: 6rem;
+
+  /*
+   * ---- Component sizes: heights the 96px spacing scale cannot reach ----
+   * Not spacing: they generate only h-chart-* and max-h-scroll-* (src/styles/index.css).
+   */
+  --size-chart-sm: 12rem; /* 192px: compact charts */
+  --size-chart-md: 18rem; /* 288px: the default plot height */
+  --size-chart-lg: 24rem; /* 384px: a page's lead chart */
+  --size-scroll-list: 15rem; /* 240px: option lists in popovers */
+  --size-scroll-table: 30rem; /* 480px: data tables scroll under a sticky header */
 
   /* ---- Radius ---- */
   --radius-control: 0.375rem; /* 6px: buttons, inputs */

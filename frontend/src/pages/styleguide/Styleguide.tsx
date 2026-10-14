@@ -4,6 +4,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button, type ButtonVariant, type ForcedState } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { StyleguideNav } from "./StyleguideNav";
 import { cn } from "../../lib/cn";
 import {
   AA_NORMAL_TEXT,
@@ -65,6 +66,11 @@ const ROLES: Record<string, string> = {
   negative: "Negative text, errors, destructive",
   "negative-hover": "Destructive hover",
   "negative-subtle": "Tint behind negative text",
+  scrim: "Behind the navigation drawer (ink-900 at 40%)",
+  "series-1": "Chart series 1, the primary series. Marks only, never text",
+  "series-2": "Chart series 2: comparison. Marks only (3.33:1 meets the 3:1 for marks)",
+  "series-3": "Chart series 3. Marks only. There is no series 4",
+  band: "Confidence band: maroon-500 at 14%, shown here over cream-50",
 };
 
 const FAMILIES: Array<[string, RegExp]> = [
@@ -109,7 +115,9 @@ function useTokens() {
     const declarations = readRootDeclarations();
     const colors = colorTokens(declarations);
     const background = resolveColor(`var(--color-${BACKGROUND})`);
-    const rgb = new Map<string, Rgb>(colors.map((t) => [t.name, resolveColor(`var(${t.cssVar})`)]));
+    const rgb = new Map<string, Rgb>(
+      colors.map((t) => [t.name, resolveColor(`var(${t.cssVar})`, background)]),
+    );
     return { declarations, colors, background, rgb };
   }, []);
 }
@@ -119,7 +127,7 @@ export default function Styleguide() {
   return (
     <div className="mx-auto max-w-6xl space-y-12 px-4 py-10 sm:px-6 lg:px-8">
       <header className="space-y-4">
-        <p className="text-step-n1 font-medium text-primary">Meridian Forecast · design system</p>
+        <StyleguideNav current="tokens" />
         <h1 className="text-step-5">Styleguide</h1>
         <p className="max-w-3xl text-fg-muted">
           Every token in <code className="font-mono text-step-n1">src/styles/tokens.css</code>, read

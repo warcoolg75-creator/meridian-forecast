@@ -105,6 +105,48 @@
   }
 }
 
+/* The navigation drawer (a modal <dialog>) slides in from the left as it opens. */
+@utility slide-over {
+  translate: 0 0;
+  transition-property: translate;
+  transition-duration: var(--motion-duration);
+  transition-timing-function: ease-out;
+
+  @starting-style {
+    translate: -100% 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-property: none;
+  }
+}
+
+/* Toasts fade and rise in when they are added. */
+@utility fade-in {
+  transition-property: opacity, translate;
+  transition-duration: var(--motion-duration);
+  transition-timing-function: ease-out;
+
+  @starting-style {
+    opacity: 0;
+    translate: 0 var(--motion-rise);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-property: none;
+  }
+}
+
+/* Plot heights (--size-chart-* in tokens.css): the spacing scale stops at 96px. */
+@utility h-chart-* {
+  height: --value(--size-chart-*);
+}
+
+/* Scrolling panels (--size-scroll-*): option lists, data tables under a sticky header. */
+@utility max-h-scroll-* {
+  max-height: --value(--size-scroll-*);
+}
+
 /* Every number shown as data (KPIs, deltas, table cells, axis labels): Inter with tabular
    figures, even when it sits inside a Fraunces heading. */
 @utility figure {

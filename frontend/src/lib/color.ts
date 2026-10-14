@@ -8,23 +8,47 @@ export type Rgb = readonly [number, number, number];
 /** WCAG AA minimum for normal-size text. */
 export const AA_NORMAL_TEXT = 4.5;
 
-/** Resolve a CSS colour expression such as `var(--color-maroon-500)` to sRGB 0..255. */
-export function resolveColor(expression: string): Rgb {
+/**
+ * Resolve a CSS colour expression such as `var(--color-maroon-500)` to sRGB 0..255.
+ * A translucent colour (the chart band, the scrim) is composited over `background`, so
+ * its contrast is measured as it is seen.
+ */
+export function resolveColor(expression: string, background?: Rgb): Rgb {
   const probe = document.createElement("span");
   probe.style.display = "none";
   probe.style.color = expression;
   document.body.append(probe);
   const computed = getComputedStyle(probe).color;
   probe.remove();
-  return parseComputedColor(computed);
+  const { rgb, alpha } = parseComputedColor(computed);
+  if (alpha >= 1 || !background) return rgb;
+  return [0, 1, 2].map((i) => rgb[i] * alpha + background[i] * (1 - alpha)) as unknown as Rgb;
+}
+
+function parseAlpha(value: string | undefined): number {
+  if (value === undefined) return 1;
+  return value.endsWith("%") ? Number(value.slice(0, -1)) / 100 : Number(value);
 }
 
 /** Browsers serialise hex tokens in the legacy RGB syntax and srgb mixes in CSS Color 4 form. */
-function parseComputedColor(value: string): Rgb {
-  const legacy = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i.exec(value);
-  if (legacy) return [Number(legacy[1]), Number(legacy[2]), Number(legacy[3])];
-  const srgb = /^color\(srgb\s+([\d.e+-]+)\s+([\d.e+-]+)\s+([\d.e+-]+)/i.exec(value);
-  if (srgb) return [Number(srgb[1]) * 255, Number(srgb[2]) * 255, Number(srgb[3]) * 255];
+function parseComputedColor(value: string): { rgb: Rgb; alpha: number } {
+  const legacy = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?/i.exec(
+    value,
+  );
+  if (legacy) {
+    return {
+      rgb: [Number(legacy[1]), Number(legacy[2]), Number(legacy[3])],
+      alpha: parseAlpha(legacy[4]),
+    };
+  }
+  const srgb =
+    /^color\(srgb\s+([\d.e+-]+)\s+([\d.e+-]+)\s+([\d.e+-]+)(?:\s*\/\s*([\d.e+-]+%?))?/i.exec(value);
+  if (srgb) {
+    return {
+      rgb: [Number(srgb[1]) * 255, Number(srgb[2]) * 255, Number(srgb[3]) * 255],
+      alpha: parseAlpha(srgb[4]),
+    };
+  }
   throw new Error(`Unsupported computed colour: ${value}`);
 }
 
