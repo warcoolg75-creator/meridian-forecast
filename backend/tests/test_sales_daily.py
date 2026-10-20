@@ -1,4 +1,4 @@
-"""GET /api/v1/sales/daily: date-range filtering, bucketing, region roll-up, grouping."""
+"""GET /api/v1/sales/daily: date-range filtering, bucketing, region roll-up, grouping, keyset paging."""
 
 from datetime import date, timedelta
 
@@ -33,22 +33,22 @@ def gift_units(day: date) -> int:
     return day.day + 1  # Mumbai + Pune
 
 
-def test_day_range_is_inclusive_on_both_ends(client, sales):
-    body = get(client, sku="FDS-GFB-1KG", date_from="2024-12-30", date_to="2025-01-02")
+def test_day_range_is_inclusive_on_both_ends(signed_in, sales):
+    body = get(signed_in, sku="FDS-GFB-1KG", date_from="2024-12-30", date_to="2025-01-02")
     assert [i["period_start"] for i in body["items"]] == ["2024-12-30", "2024-12-31", "2025-01-01", "2025-01-02"]
     assert [i["units"] for i in body["items"]] == [31, 32, 2, 3]
     assert all(not i["is_partial"] and i["days_covered"] == 1 for i in body["items"])
 
 
-def test_date_from_alone_and_date_to_alone(client, sales):
-    after = get(client, sku="FDS-GFB-1KG", date_from="2025-01-07")
-    before = get(client, sku="FDS-GFB-1KG", date_to="2024-12-27")
+def test_date_from_alone_and_date_to_alone(signed_in, sales):
+    after = get(signed_in, sku="FDS-GFB-1KG", date_from="2025-01-07")
+    before = get(signed_in, sku="FDS-GFB-1KG", date_to="2024-12-27")
     assert [i["period_start"] for i in after["items"]] == ["2025-01-07", "2025-01-08"]
     assert [i["period_start"] for i in before["items"]] == ["2024-12-26", "2024-12-27"]
 
 
-def test_week_buckets_start_monday_and_cross_the_year_boundary(client, sales):
-    body = get(client, sku="FDS-GFB-1KG", granularity="week")
+def test_week_buckets_start_monday_and_cross_the_year_boundary(signed_in, sales):
+    body = get(signed_in, sku="FDS-GFB-1KG", granularity="week")
     weeks = [(i["period_start"], i["period_end"], i["units"], i["days_covered"], i["is_partial"])
              for i in body["items"]]
 
@@ -62,48 +62,48 @@ def test_week_buckets_start_monday_and_cross_the_year_boundary(client, sales):
         # Data ends Wed 8 Jan.
         ("2025-01-06", "2025-01-12", total(date(2025, 1, 6), date(2025, 1, 8)), 3, True),
     ]
-    assert body["total"] == 3
+    assert body["next_cursor"] is None
 
 
-def test_week_buckets_respect_the_date_filter(client, sales):
-    body = get(client, sku="FDS-GFB-1KG", granularity="week", date_from="2024-12-31", date_to="2025-01-06")
+def test_week_buckets_respect_the_date_filter(signed_in, sales):
+    body = get(signed_in, sku="FDS-GFB-1KG", granularity="week", date_from="2024-12-31", date_to="2025-01-06")
     assert [(i["period_start"], i["units"], i["days_covered"], i["is_partial"]) for i in body["items"]] == [
         ("2024-12-30", sum(gift_units(date(2024, 12, 31) + timedelta(days=k)) for k in range(6)), 6, True),
         ("2025-01-06", gift_units(date(2025, 1, 6)), 1, True),
     ]
 
 
-def test_month_buckets(client, sales):
-    body = get(client, granularity="month", region="IN-MH")
+def test_month_buckets(signed_in, sales):
+    body = get(signed_in, granularity="month", region="IN-MH")
     assert [(i["period_start"], i["period_end"], i["units"]) for i in body["items"]] == [
         ("2024-12-01", "2024-12-31", sum(d + 1 for d in range(26, 32))),
         ("2025-01-01", "2025-01-31", sum(d + 1 for d in range(1, 9))),
     ]
 
 
-def test_month_bucket_handles_leap_february(client, db, ids):
+def test_month_bucket_handles_leap_february(signed_in, db, ids):
     add_daily(db, ids, [(date(2024, 2, 28), "IND-BRG-6205", "IN-DL-NDL", "direct", 5, 500),
                         (date(2024, 2, 29), "IND-BRG-6205", "IN-DL-NDL", "direct", 7, 700),
                         (date(2024, 3, 1), "IND-BRG-6205", "IN-DL-NDL", "direct", 11, 1100)])
-    body = get(client, granularity="month")
+    body = get(signed_in, granularity="month")
     assert [(i["period_start"], i["period_end"], i["units"]) for i in body["items"]] == [
         ("2024-02-01", "2024-02-29", 12), ("2024-03-01", "2024-03-31", 11)]
 
 
-def test_region_filter_includes_child_regions(client, sales):
-    state = get(client, region="IN-MH", date_from="2025-01-01", date_to="2025-01-01")
-    city = get(client, region="IN-MH-PUN", date_from="2025-01-01", date_to="2025-01-01")
-    country = get(client, region="IN", date_from="2025-01-01", date_to="2025-01-01")
+def test_region_filter_includes_child_regions(signed_in, sales):
+    state = get(signed_in, region="IN-MH", date_from="2025-01-01", date_to="2025-01-01")
+    city = get(signed_in, region="IN-MH-PUN", date_from="2025-01-01", date_to="2025-01-01")
+    country = get(signed_in, region="IN", date_from="2025-01-01", date_to="2025-01-01")
     assert state["items"][0]["units"] == 1 + 1
     assert city["items"][0]["units"] == 1
     assert country["items"][0]["units"] == 1 + 1 + 100
 
 
-def test_channel_filter_and_group_by(client, sales):
-    retail = get(client, channel="retail", date_from="2025-01-02", date_to="2025-01-02")
+def test_channel_filter_and_group_by(signed_in, sales):
+    retail = get(signed_in, channel="retail", date_from="2025-01-02", date_to="2025-01-02")
     assert retail["items"][0]["units"] == 2
 
-    grouped = get(client, date_from="2025-01-02", date_to="2025-01-02", group_by=["sku", "channel"])
+    grouped = get(signed_in, date_from="2025-01-02", date_to="2025-01-02", group_by=["sku", "channel"])
     assert [(i["sku"], i["channel"], i["region_code"], i["units"], i["revenue_minor"]) for i in grouped["items"]] == [
         ("FDS-GFB-1KG", "distributor", None, 1, 900),
         ("FDS-GFB-1KG", "retail", None, 2, 2000),
@@ -111,13 +111,55 @@ def test_channel_filter_and_group_by(client, sales):
     ]
 
 
-def test_multiple_skus_and_pagination(client, sales):
+def test_multiple_skus_and_keyset_pagination(signed_in, sales):
     params = dict(sku=["FDS-GFB-1KG", "IND-BRG-6205"], date_from="2025-01-01", date_to="2025-01-08",
-                  group_by="sku", limit=5, offset=5)
-    body = get(client, **params)
-    assert body["total"] == 16
-    assert len(body["items"]) == 5
-    assert body["items"][0]["period_start"] == "2025-01-03" and body["items"][0]["sku"] == "IND-BRG-6205"
+                  group_by="sku", limit=5)
+    first = get(signed_in, **params)
+    assert len(first["items"]) == 5 and first["next_cursor"]
+    second = get(signed_in, **params, cursor=first["next_cursor"])
+    assert second["items"][0]["period_start"] == "2025-01-03" and second["items"][0]["sku"] == "IND-BRG-6205"
+
+
+def page_through(client, **params) -> list[dict]:
+    items, cursor = [], None
+    while True:
+        body = get(client, **params, **({"cursor": cursor} if cursor else {}))
+        items += body["items"]
+        cursor = body["next_cursor"]
+        if cursor is None:
+            return items
+
+
+@pytest.mark.parametrize(("granularity", "group_by"), [
+    ("day", ["sku", "region", "channel"]),  # the raw-row fast path down the unique index
+    ("day", ["region"]),
+    ("week", ["sku", "region", "channel"]),
+    ("month", ["channel"]),
+    ("week", []),
+])
+def test_paging_returns_every_row_once_in_order(signed_in, sales, granularity, group_by):
+    everything = get(signed_in, granularity=granularity, group_by=group_by, limit=10000)["items"]
+    assert len(everything) >= 3
+    for limit in (1, 2, 7):
+        assert page_through(signed_in, granularity=granularity, group_by=group_by, limit=limit) == everything
+
+
+def test_last_page_has_no_cursor(signed_in, sales):
+    body = get(signed_in, sku="IND-BRG-6205", date_from="2025-01-01", date_to="2025-01-03", limit=3)
+    assert len(body["items"]) == 3 and body["next_cursor"] is None
+
+
+def test_cursor_must_match_the_query(signed_in, sales):
+    cursor = get(signed_in, granularity="day", limit=1)["next_cursor"]
+    assert signed_in.get("/api/v1/sales/daily", params={"granularity": "week", "cursor": cursor}).status_code == 422
+    assert signed_in.get("/api/v1/sales/daily",
+                         params={"group_by": "sku", "cursor": cursor}).status_code == 422
+    for bad in ("not-a-cursor", "e30", cursor[:-3]):
+        assert signed_in.get("/api/v1/sales/daily", params={"cursor": bad}).status_code == 422
+
+
+def test_sales_data_needs_a_signed_in_user(client, sales):
+    assert client.get("/api/v1/sales/daily").status_code == 401
 
 
 @pytest.mark.parametrize(("params", "status"), [
@@ -128,9 +170,9 @@ def test_multiple_skus_and_pagination(client, sales):
     ({"channel": "wholesale"}, 422),
     ({"date_from": "05/01/2025"}, 422),
 ])
-def test_bad_parameters(client, sales, params, status):
-    assert client.get("/api/v1/sales/daily", params=params).status_code == status
+def test_bad_parameters(signed_in, sales, params, status):
+    assert signed_in.get("/api/v1/sales/daily", params=params).status_code == status
 
 
-def test_empty_database_returns_empty_page(client, ids):
-    assert get(client, granularity="week") == {"items": [], "total": 0, "limit": 1000, "offset": 0}
+def test_empty_database_returns_empty_page(signed_in, ids):
+    assert get(signed_in, granularity="week") == {"items": [], "next_cursor": None, "limit": 1000}

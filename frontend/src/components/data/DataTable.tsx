@@ -30,6 +30,11 @@ export interface DataTableProps<Row> {
   onRetry?: () => void;
   emptyTitle?: string;
   emptyMessage?: ReactNode;
+  /**
+   * Cap the height and scroll inside (default), keeping the header in view. Pass false
+   * for short tables that read better at full length.
+   */
+  capHeight?: boolean;
 }
 
 const CELL = "border-b border-line px-4 py-3";
@@ -53,6 +58,7 @@ export function DataTable<Row>({
   onRetry,
   emptyTitle = "No rows to show",
   emptyMessage = "Nothing matches the current filters.",
+  capHeight = true,
 }: DataTableProps<Row>) {
   const state = isLoading ? "loading" : error ? "error" : rows.length === 0 ? "empty" : "ready";
   const skeletonRows = Math.min(pagination?.pageSize ?? 5, 8);
@@ -85,7 +91,9 @@ export function DataTable<Row>({
           Loading {caption}
         </p>
       )}
-      <div className="max-h-scroll-table overflow-auto">
+      {/* relative: absolutely positioned content in a cell (screen-reader text, a tooltip)
+          is contained and scrolls with the table instead of widening the page. */}
+      <div className={cn("relative overflow-auto", capHeight && "max-h-scroll-table")}>
         <table className="w-full border-separate border-spacing-0 text-step-n1">
           <caption className="sr-only">{caption}</caption>
           <thead>

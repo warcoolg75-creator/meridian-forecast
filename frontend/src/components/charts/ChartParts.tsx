@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { SERIES_BG, SERIES_STROKE } from "./chart-theme";
 
-export type KeyShape = "line" | "dashed" | "bar" | "band";
+export type KeyShape = "line" | "dashed" | "bar" | "band" | "event-band" | "event-line";
 
 /**
  * The mark beside a legend or tooltip label: identity comes from this coloured key,
@@ -15,6 +15,16 @@ export function SeriesKey({ shape, series = 0 }: { shape: KeyShape; series?: num
   }
   if (shape === "band") {
     return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-band" />;
+  }
+  if (shape === "event-band") {
+    return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-annotation-band" />;
+  }
+  if (shape === "event-line") {
+    return (
+      <svg aria-hidden viewBox="0 0 4 12" className="h-3 w-1 shrink-0 overflow-visible">
+        <line x1="2" y1="0" x2="2" y2="12" strokeWidth="1.5" className="stroke-annotation" />
+      </svg>
+    );
   }
   return (
     <svg aria-hidden viewBox="0 0 16 4" className="h-1 w-4 shrink-0 overflow-visible">

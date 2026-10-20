@@ -25,9 +25,10 @@ SEED ?= 42
 END_DATE ?= 2026-10-08
 SEED_ARGS ?=
 ROLLUP_ARGS ?=
+VERIFY_ARGS ?=
 PYTEST_ARGS ?=
 
-.PHONY: venv migrate seed rollup test run dev web build lint hooks
+.PHONY: venv migrate seed rollup rollup-periods verify-analytics test test-pg run dev web build lint hooks
 
 venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
@@ -40,11 +41,20 @@ migrate:  ## apply Alembic migrations to DATABASE_URL (SQLite file by default)
 seed:  ## wipe and regenerate the pinned dataset (same bytes every run, every day)
 	cd backend && "$(PYTHON)" -m app.cli seed --seed $(SEED) --end-date $(END_DATE) $(SEED_ARGS)
 
-rollup:  ## rebuild daily_sales from order lines; e.g. make rollup ROLLUP_ARGS="--date-from 2026-01-01"
+rollup:  ## rebuild daily_sales from order lines (and its weekly/monthly rollups); e.g. make rollup ROLLUP_ARGS="--date-from 2026-01-01"
 	cd backend && "$(PYTHON)" -m app.cli rollup $(ROLLUP_ARGS)
 
-test:  ## run pytest; set TEST_DATABASE_URL to a disposable PostgreSQL DB to include PG tests
+rollup-periods:  ## rebuild only weekly_sales and monthly_sales from the existing daily_sales
+	cd backend && "$(PYTHON)" -m app.cli rollup-periods $(ROLLUP_ARGS)
+
+verify-analytics:  ## recompute every analytics figure in pandas and compare with the running API (make run first)
+	cd backend && "$(PYTHON)" tools/verify_analytics.py $(VERIFY_ARGS)
+
+test:  ## run pytest on SQLite (always: PostgreSQL is opt-in, see test-pg)
 	cd backend && "$(PYTHON)" -m pytest $(PYTEST_ARGS)
+
+test-pg:  ## run pytest on TEST_DATABASE_URL (PostgreSQL): DROPS AND RECREATES this project's tables there
+	cd backend && MERIDIAN_PG_TESTS=1 "$(PYTHON)" -m pytest $(PYTEST_ARGS)
 
 run:  ## start the API on http://127.0.0.1:8000 (docs at /docs)
 	cd backend && "$(PYTHON)" -m uvicorn app.main:app --reload

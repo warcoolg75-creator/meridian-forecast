@@ -3,10 +3,10 @@
 Each dialect compiles its own SQL (app/services/bucketing.py). These tests run the
 SQL on real databases against dates chosen to break naive implementations: ISO week
 53, Sunday/Monday edges, leap day, a week straddling New Year. The PostgreSQL tests
-are skipped unless TEST_DATABASE_URL points at a PostgreSQL database.
+run only with MERIDIAN_PG_TESTS=1 (see conftest.py).
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 import sqlalchemy as sa
@@ -14,7 +14,7 @@ from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
 from app.seed.generate import wipe_all
-from app.services.bucketing import Granularity, period_start, period_start_expr
+from app.services.bucketing import Granularity, period_start, period_start_expr, shift_days
 from app.services.sales_query import GroupBy, SalesQuery, query_sales
 from tests.conftest import add_daily, add_reference_data, requires_pg
 
@@ -85,11 +85,43 @@ def test_sales_query_identical_on_sqlite_and_postgres(sqlite_engine, pg_engine, 
                                                         ("IND-BRG-6205", "IN-DL-NDL", "direct", 40)]
                 ])
                 query = SalesQuery(granularity=granularity, region_codes=["IN"], group_by=[GroupBy.SKU])
-                items, total = query_sales(session, query, limit=1000, offset=0)
-                results.append(([i.model_dump() for i in items], total))
+                items, next_cursor = query_sales(session, query, limit=1000)
+                results.append(([i.model_dump() for i in items], len(items), next_cursor))
             finally:
                 session.rollback()
                 wipe_all(session)
                 session.commit()
     assert results[0] == results[1]
     assert results[0][1] > 0
+
+
+SHIFTS = [364, -364, 7, -1, 28]
+
+
+def shift_in_database(engine: Engine, days: int) -> list[tuple[date, date]]:
+    probe = sa.Table("bucket_probe", sa.MetaData(), sa.Column("d", sa.Date, primary_key=True))
+    probe.drop(engine, checkfirst=True)
+    probe.create(engine)
+    try:
+        with engine.begin() as connection:
+            connection.execute(probe.insert(), [{"d": d} for d in TRICKY_DATES])
+            return [tuple(row) for row in connection.execute(
+                sa.select(probe.c.d, shift_days(probe.c.d, days)).order_by(probe.c.d))]
+    finally:
+        probe.drop(engine)
+
+
+@pytest.mark.parametrize("days", SHIFTS)
+def test_sqlite_add_days_matches_python(sqlite_engine, days):
+    assert shift_in_database(sqlite_engine, days) == [(d, d + timedelta(days=days)) for d in TRICKY_DATES]
+
+
+@requires_pg
+@pytest.mark.parametrize("days", SHIFTS)
+def test_postgres_add_days_matches_python(pg_engine, days):
+    assert shift_in_database(pg_engine, days) == [(d, d + timedelta(days=days)) for d in TRICKY_DATES]
+
+
+def test_different_shifts_do_not_share_a_cached_statement(sqlite_engine):
+    """n is inlined in the SQL, so a cached plan for 364 must not answer for 7."""
+    assert shift_in_database(sqlite_engine, 364) != shift_in_database(sqlite_engine, 7)

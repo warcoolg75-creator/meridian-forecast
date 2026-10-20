@@ -26,6 +26,7 @@ export function FilterBar({
   optionsLoading,
   optionsError,
   onRetryOptions,
+  show = {},
 }: {
   value: Filters;
   onChange: (filters: Filters) => void;
@@ -37,6 +38,8 @@ export function FilterBar({
   /** Loading those options failed; the date range and granularity still work. */
   optionsError?: string | null;
   onRetryOptions?: () => void;
+  /** Hide a picker the page fixes itself, e.g. products on a product's own page. */
+  show?: Partial<Record<"products" | "regions" | "channels", boolean>>;
 }) {
   const set = <K extends keyof Filters>(key: K, next: Filters[K]) =>
     onChange({ ...value, [key]: next });
@@ -58,9 +61,9 @@ export function FilterBar({
         onChange={(range) => set("dateRange", range)}
         asOf={asOf}
       />
-      {dimension("products", "Products")}
-      {dimension("regions", "Regions")}
-      {dimension("channels", "Channels")}
+      {show.products !== false && dimension("products", "Products")}
+      {show.regions !== false && dimension("regions", "Regions")}
+      {show.channels !== false && dimension("channels", "Channels")}
       <SegmentedControl
         label="Granularity"
         options={GRANULARITIES}

@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   Area,
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -20,6 +21,8 @@ import {
 import { formatCompact, formatInteger } from "../../lib/format";
 import { usePrefersReducedMotion } from "../../lib/usePrefersReducedMotion";
 import {
+  ANNOTATION_BAND_COLOR,
+  ANNOTATION_COLOR,
   BAND_COLOR,
   GRID_COLOR,
   RULE_COLOR,
@@ -48,6 +51,16 @@ export interface TimeSeriesPoint {
   /** The confidence band around the band series at this date, when there is one. */
   low?: number | null;
   high?: number | null;
+  /** Shown in the tooltip and the hidden table, e.g. "Partial week: 3 of 7 days". */
+  note?: string;
+}
+
+/** A dated event drawn on the chart: a wash over a span, or a rule on a day. */
+export interface ChartEvent {
+  from: IsoDate;
+  to: IsoDate;
+  label: string;
+  kind: "span" | "day";
 }
 
 export interface TimeSeriesChartProps extends ChartStateProps {
@@ -74,6 +87,17 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   /** Vertical axis ticks. Default: compact (12K, 1.2L). */
   formatTick?: (value: number) => string;
   height?: ChartHeight;
+  /**
+   * Events to mark, snapped to the bucket they fall in: spans (promotions) as an ink wash,
+   * days (holidays) as an ink rule. Only on charts whose series do not use ink-400.
+   */
+  events?: ChartEvent[];
+  /** Names the two event kinds in the legend. */
+  eventLabels?: { span: string; day: string };
+  /** Controls beside the title, e.g. a metric toggle. */
+  actions?: ReactNode;
+  /** Under the plot, e.g. a note on festivals that moved between years. */
+  footer?: ReactNode;
 }
 
 type Row = Record<string, string | number | null | [number, number]>;
@@ -96,6 +120,10 @@ export function TimeSeriesChart({
   formatValue = formatInteger,
   formatTick = formatCompact,
   height = "md",
+  events = [],
+  eventLabels = { span: "Promotion", day: "Holiday or festival" },
+  actions,
+  footer,
   ...state
 }: TimeSeriesChartProps) {
   const reducedMotion = usePrefersReducedMotion();
@@ -141,6 +169,35 @@ export function TimeSeriesChart({
   );
 
   const byDate = useMemo(() => new Map(data.map((point) => [point.date, point])), [data]);
+
+  // Each event snaps to the bucket it falls in: the last point starting on or before it.
+  const placed = useMemo(() => {
+    const starts = data.map((point) => point.date);
+    const bucketOf = (date: IsoDate) => {
+      let found: IsoDate | null = null;
+      for (const start of starts) if (start <= date) found = start;
+      return found;
+    };
+    const last = data[data.length - 1]?.date;
+    return events
+      .filter((e) => starts.length && e.to >= starts[0] && last !== undefined && e.from <= last)
+      .map((e) => ({
+        ...e,
+        x1: bucketOf(e.from < starts[0] ? starts[0] : e.from)!,
+        x2: bucketOf(e.to)!,
+      }));
+  }, [data, events]);
+  const eventsByBucket = useMemo(() => {
+    const map = new Map<IsoDate, string[]>();
+    for (const e of placed) {
+      for (const point of data) {
+        if (point.date >= e.x1 && point.date <= e.x2) {
+          map.set(point.date, [...(map.get(point.date) ?? []), e.label]);
+        }
+      }
+    }
+    return map;
+  }, [placed, data]);
   const hasBand = Boolean(bandLabel) && data.some((point) => typeof point.low === "number");
   const hasForecast = lastActual >= 0 && lastActual < data.length - 1;
   const isForecastDate = (date: IsoDate) => forecastStart !== undefined && date >= forecastStart;
@@ -152,13 +209,19 @@ export function TimeSeriesChart({
   }));
   if (hasForecast) legend.push({ label: "Forecast", shape: "dashed", series: bandSlot });
   if (hasBand && bandLabel) legend.push({ label: bandLabel, shape: "band" });
-  const showLegend = series.length > 1 || hasForecast || hasBand;
+  if (placed.some((e) => e.kind === "span"))
+    legend.push({ label: eventLabels.span, shape: "event-band" });
+  if (placed.some((e) => e.kind === "day"))
+    legend.push({ label: eventLabels.day, shape: "event-line" });
+  const showLegend = series.length > 1 || hasForecast || hasBand || placed.length > 0;
+  const hasNotes = data.some((point) => point.note) || placed.length > 0;
 
   const tableColumns = [
     xAxisLabel,
     ...series.map((s) => s.label),
     ...(hasForecast ? ["Actual or forecast"] : []),
     ...(hasBand && bandLabel ? [`${bandLabel}, low`, `${bandLabel}, high`] : []),
+    ...(hasNotes ? ["Notes"] : []),
   ];
   const tableRows = data.map((point) => {
     const cells = series.map((s) => {
@@ -170,6 +233,11 @@ export function TimeSeriesChart({
       cells.push(
         typeof point.low === "number" ? formatValue(point.low) : "None",
         typeof point.high === "number" ? formatValue(point.high) : "None",
+      );
+    }
+    if (hasNotes) {
+      cells.push(
+        [point.note, ...(eventsByBucket.get(point.date) ?? [])].filter(Boolean).join("; "),
       );
     }
     return { key: point.date, heading: formatPeriod(point.date, granularity), cells };
@@ -184,6 +252,8 @@ export function TimeSeriesChart({
       legend={showLegend ? <ChartLegend entries={legend} /> : undefined}
       yAxisTitle={yAxisLabel}
       xAxisTitle={xAxisLabel}
+      actions={actions}
+      footer={footer}
       dataTable={
         <HiddenDataTable
           caption={`${title}. Values: ${yAxisLabel}.`}
@@ -197,8 +267,9 @@ export function TimeSeriesChart({
           data={rows}
           role="img"
           title={`${title}. The values follow as a table.`}
-          // Room on the right for the last tick label, centred on the plot's edge.
-          margin={{ top: 8, right: 24, bottom: 0, left: 0 }}
+          // Room on the right for the last tick label, centred on the plot's edge: "Oct 2026"
+          // is 50px wide, so 24px clipped it by a pixel.
+          margin={{ top: 8, right: 32, bottom: 0, left: 0 }}
         >
           <CartesianGrid vertical={false} stroke={GRID_COLOR} />
           <XAxis
@@ -215,7 +286,8 @@ export function TimeSeriesChart({
             tick={{ className: TICK_CLASS }}
             tickLine={false}
             axisLine={false}
-            width={48}
+            // Sized to the widest tick: a fixed 48px clipped the rupee sign off "₹2.25Cr".
+            width="auto"
           />
           <Tooltip
             cursor={{ stroke: RULE_COLOR, strokeWidth: 1 }}
@@ -247,10 +319,39 @@ export function TimeSeriesChart({
                       value={`${formatValue(point.low)} – ${formatValue(point.high)}`}
                     />
                   )}
+                  {point.note && <p className="pt-1 text-fg-muted">{point.note}</p>}
+                  {eventsByBucket.get(point.date)?.map((label) => (
+                    <p key={label} className="text-fg-muted">
+                      {label}
+                    </p>
+                  ))}
                 </TooltipBox>
               );
             }}
           />
+          {placed
+            .filter((e) => e.kind === "span")
+            .map((e) => (
+              <ReferenceArea
+                key={`span-${e.label}-${e.from}`}
+                x1={e.x1}
+                x2={e.x2}
+                fill={ANNOTATION_BAND_COLOR}
+                fillOpacity={1}
+                stroke="none"
+                ifOverflow="hidden"
+              />
+            ))}
+          {placed
+            .filter((e) => e.kind === "day")
+            .map((e) => (
+              <ReferenceLine
+                key={`day-${e.label}-${e.from}`}
+                x={e.x1}
+                stroke={ANNOTATION_COLOR}
+                strokeWidth={1}
+              />
+            ))}
           {hasBand && (
             <Area
               dataKey="band"

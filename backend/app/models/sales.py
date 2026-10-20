@@ -75,3 +75,47 @@ class DailySales(Base):
     revenue_minor: Mapped[int] = mapped_column(sa.BigInteger)
     order_count: Mapped[int | None] = mapped_column(sa.Integer)
     source: Mapped[SalesSource] = mapped_column(enum_type(SalesSource, "sales_source"))
+
+
+class _PeriodSales:
+    """Columns shared by the weekly and monthly rollups of daily_sales.
+
+    One row per (period_start, product, region, channel) with the cell's sums over the
+    period. Maintained by app/services/rollup.py whenever daily_sales changes (the
+    rollup job and CSV imports), so a period row always equals the GROUP BY of its
+    daily rows; tests/test_period_rollups.py asserts that. Analytics reads whole
+    periods from here and only the partial periods at a range's edges from daily_sales.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    period_start: Mapped[date] = mapped_column(sa.Date)
+    product_id: Mapped[int] = mapped_column(sa.ForeignKey("products.id"))
+    region_id: Mapped[int] = mapped_column(sa.ForeignKey("regions.id"))
+    channel: Mapped[Channel] = mapped_column(enum_type(Channel, "channel"))
+    units: Mapped[int] = mapped_column(sa.Integer)
+    revenue_minor: Mapped[int] = mapped_column(sa.BigInteger)
+    order_count: Mapped[int | None] = mapped_column(sa.Integer)
+
+
+class WeeklySales(_PeriodSales, Base):
+    """daily_sales per ISO week; period_start is the Monday."""
+
+    __tablename__ = "weekly_sales"
+    __table_args__ = (
+        sa.UniqueConstraint("period_start", "product_id", "region_id", "channel", name="uq_weekly_sales_cell"),
+        sa.Index("ix_weekly_sales_product_period", "product_id", "period_start"),
+        sa.CheckConstraint("units >= 0", name="units_non_negative"),
+        sa.CheckConstraint("revenue_minor >= 0", name="revenue_non_negative"),
+    )
+
+
+class MonthlySales(_PeriodSales, Base):
+    """daily_sales per calendar month; period_start is the 1st."""
+
+    __tablename__ = "monthly_sales"
+    __table_args__ = (
+        sa.UniqueConstraint("period_start", "product_id", "region_id", "channel", name="uq_monthly_sales_cell"),
+        sa.Index("ix_monthly_sales_product_period", "product_id", "period_start"),
+        sa.CheckConstraint("units >= 0", name="units_non_negative"),
+        sa.CheckConstraint("revenue_minor >= 0", name="revenue_non_negative"),
+    )

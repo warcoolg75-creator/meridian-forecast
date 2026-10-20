@@ -17,6 +17,12 @@ SQLite:      date(d, '-' || ((CAST(strftime('%w', d) AS INTEGER) + 6) % 7) || ' 
     Month uses date(d, 'start of month'). SQLite's date() returns 'YYYY-MM-DD' text,
     which the Date result type parses back into a date.
 
+add_days(d, n) -> the date n days after d (n may be negative). Analytics uses it to
+bucket a comparison window into the current window's buckets (same days, shifted).
+
+PostgreSQL:  (d + n)                      date + integer is a date
+SQLite:      date(d, '+n days')           n is inlined, so it is part of the cache key
+
 Any other dialect fails loudly at compile time instead of returning wrong buckets.
 """
 
@@ -24,7 +30,7 @@ import calendar
 from datetime import date, timedelta
 from enum import StrEnum
 
-from sqlalchemy import Date
+from sqlalchemy import Date, literal_column
 from sqlalchemy.exc import CompileError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.elements import ColumnElement
@@ -49,8 +55,26 @@ class month_start(FunctionElement[date]):
     name = "month_start"
 
 
+class add_days(FunctionElement[date]):
+    """`column + n` days. Build it with shift_days(); n travels as literal SQL text so
+    that two different shifts never share a cached statement."""
+
+    type = Date()
+    inherit_cache = True
+    name = "add_days"
+
+
+def shift_days(column: ColumnElement[date], n: int) -> ColumnElement[date]:
+    return column if n == 0 else add_days(column, literal_column(str(int(n))))
+
+
+def _days(element) -> int:
+    return int(list(element.clauses)[1].name)
+
+
 @compiles(week_start)
 @compiles(month_start)
+@compiles(add_days)
 def _unsupported(element, compiler, **kw):
     raise CompileError(f"{element.name} is not implemented for dialect {compiler.dialect.name!r}")
 
@@ -65,6 +89,18 @@ def _week_start_pg(element, compiler, **kw):
 def _month_start_pg(element, compiler, **kw):
     arg = compiler.process(element.clauses, **kw)
     return f"CAST(date_trunc('month', CAST({arg} AS TIMESTAMP)) AS DATE)"
+
+
+@compiles(add_days, "postgresql")
+def _add_days_pg(element, compiler, **kw):
+    arg = compiler.process(list(element.clauses)[0], **kw)
+    return f"({arg} + {_days(element)})"
+
+
+@compiles(add_days, "sqlite")
+def _add_days_sqlite(element, compiler, **kw):
+    arg = compiler.process(list(element.clauses)[0], **kw)
+    return f"date({arg}, '{_days(element):+d} days')"
 
 
 @compiles(week_start, "sqlite")

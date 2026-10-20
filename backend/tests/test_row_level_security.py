@@ -3,8 +3,8 @@
 Checked against the current models, not 0002's frozen list, so a later migration that
 adds a table without enabling RLS fails here. RLS must not be FORCEd: the app connects
 as the tables' owner and relies on that exemption (the rest of the suite, running on
-PostgreSQL, proves the app still reads and writes). Skipped unless TEST_DATABASE_URL
-points at a PostgreSQL database; SQLite has no RLS.
+PostgreSQL, proves the app still reads and writes). Runs only with MERIDIAN_PG_TESTS=1
+(see conftest.py); SQLite has no RLS.
 """
 
 import sqlalchemy as sa

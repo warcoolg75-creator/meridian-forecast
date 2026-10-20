@@ -1,13 +1,20 @@
 """Shared fixtures.
 
-The suite runs on a temporary SQLite file. If TEST_DATABASE_URL (environment or the
-repo-root .env) points at PostgreSQL, the whole suite runs there instead and the
-cross-dialect tests compare the two. This project's tables in that database are
+The suite runs on a temporary SQLite file unless PostgreSQL is asked for on the command
+line: MERIDIAN_PG_TESTS=1 in the environment of the pytest process (`make test-pg`).
+Then the whole suite runs on TEST_DATABASE_URL (environment or the repo-root .env) and
+the cross-dialect tests compare the two. This project's tables in that database are
 dropped and recreated, so it must not hold anything you want to keep in them.
+
+The opt-in is never read from .env, which only supplies the URL: on 2026-10-20 a plain
+`pytest` took the URL from .env and wiped the hosted copy of the pinned dataset. Without
+the opt-in, the session also refuses every non-SQLite database connection and every
+lookup of or connection to another machine, so nothing can reach PostgreSQL by accident.
 """
 
 import os
-from collections.abc import Callable, Iterator
+import sys
+from collections.abc import Callable, Iterator, Mapping
 from datetime import date
 
 # A fixed key for the test session, set before the app reads its settings, so no test
@@ -40,10 +47,65 @@ from app.models.base import utcnow
 from app.seed.generate import wipe_all
 from app.services.auth import create_access_token, hash_password
 from app.services.rate_limit import login_limiter
+from app.services.rollup import rebuild_period_rollups
 
-PG_URL = os.environ.get("TEST_DATABASE_URL") or get_settings().test_database_url
-HAS_PG = PG_URL.startswith("postgres")
-requires_pg = pytest.mark.skipif(not HAS_PG, reason="TEST_DATABASE_URL is not set to a PostgreSQL database")
+PG_OPT_IN = "MERIDIAN_PG_TESTS"
+LOOPBACK_HOSTS = {"", "localhost", "::1"}
+
+
+def postgres_url_for_tests(environ: Mapping[str, str], dotenv_url: str) -> str:
+    """The PostgreSQL URL this run may use, or "" to run on SQLite.
+
+    Only the process environment can opt in, and only with exactly "1". `.env` supplies
+    the URL once opted in, never the decision.
+    """
+    if environ.get(PG_OPT_IN) != "1":
+        return ""
+    url = environ.get("TEST_DATABASE_URL") or dotenv_url
+    if not url.startswith("postgres"):
+        raise pytest.UsageError(f"{PG_OPT_IN}=1 needs TEST_DATABASE_URL set to a PostgreSQL database")
+    return url
+
+
+PG_URL = postgres_url_for_tests(os.environ, get_settings().test_database_url)
+HAS_PG = bool(PG_URL)
+requires_pg = pytest.mark.skipif(not HAS_PG, reason=f"PostgreSQL tests need {PG_OPT_IN}=1")
+
+
+def _is_loopback(host: str | bytes | None) -> bool:
+    if host is None:  # getaddrinfo(None, port): this machine's wildcard address
+        return True
+    if isinstance(host, bytes):
+        host = host.decode()
+    return host in LOOPBACK_HOSTS or host.startswith("127.")
+
+
+def _refuse_network(event: str, args: tuple) -> None:
+    """Audit hook for a SQLite run: no lookup of, or connection to, another machine.
+
+    psycopg resolves host names with socket.getaddrinfo, so this sees an attempt to
+    reach PostgreSQL by name even though libpq opens the socket itself.
+    """
+    if event == "socket.getaddrinfo":
+        host = args[0]
+    elif event == "socket.connect" and isinstance(args[1], tuple):
+        host = args[1][0]
+    else:
+        return
+    if not _is_loopback(host):
+        raise RuntimeError(f"Network access in a SQLite test run ({event}); PostgreSQL tests need {PG_OPT_IN}=1")
+
+
+def _refuse_other_databases(dialect, _record, _cargs, _cparams) -> None:
+    """Before any engine connects: a SQLite run connects to SQLite only (an IP address
+    in a PostgreSQL URL would skip the lookup the audit hook sees)."""
+    if dialect.name != "sqlite":
+        raise RuntimeError(f"A {dialect.name} connection in a SQLite test run; PostgreSQL tests need {PG_OPT_IN}=1")
+
+
+if not HAS_PG:
+    sys.addaudithook(_refuse_network)
+    sa.event.listen(Engine, "do_connect", _refuse_other_databases)
 
 
 def migrate(engine: Engine) -> None:
@@ -66,7 +128,7 @@ def sqlite_engine(tmp_path_factory) -> Iterator[Engine]:
 @pytest.fixture(scope="session")
 def pg_engine() -> Iterator[Engine]:
     if not HAS_PG:
-        pytest.skip("TEST_DATABASE_URL is not set to a PostgreSQL database")
+        pytest.skip(f"PostgreSQL tests need {PG_OPT_IN}=1")
     engine = create_db_engine(PG_URL)
     # Drop only this project's tables: hosted Postgres (Neon, Supabase) keeps its own
     # objects in the public schema, so dropping the schema itself would break it.
@@ -188,13 +250,18 @@ def add_reference_data(session: Session) -> dict[str, dict[str, int]]:
 
 
 def add_daily(session: Session, ids: dict, rows: list[tuple]) -> None:
-    """rows: (date, sku, region_code, channel, units, revenue_minor[, source])."""
+    """rows: (date, sku, region_code, channel, units, revenue_minor[, source]).
+
+    Rebuilds the weekly and monthly rollups for those dates too, as every real writer of
+    daily_sales does, so analytics reads see the rows."""
     session.execute(sa.insert(DailySales), [
         dict(date=r[0], product_id=ids["product"][r[1]], region_id=ids["region"][r[2]], channel=r[3],
              units=r[4], revenue_minor=r[5], order_count=1 if len(r) < 7 or r[6] == "orders" else None,
              source=r[6] if len(r) > 6 else "orders")
         for r in rows
     ])
+    if rows:
+        rebuild_period_rollups(session, min(r[0] for r in rows), max(r[0] for r in rows))
     session.commit()
 
 
@@ -215,3 +282,16 @@ def add_order(session: Session, ids: dict, order_date: date, customer: str, regi
 @pytest.fixture
 def ids(db) -> dict[str, dict[str, int]]:
     return add_reference_data(db)
+
+
+@pytest.fixture
+def signed_in(client, db) -> TestClient:
+    """The test client with a viewer's access token: sales data needs a signed-in user.
+    The token is minted directly, so the password hash is never checked (and argon2's
+    deliberate cost is not paid in every analytics test)."""
+    user = User(email="viewer@example.com", full_name="Test viewer", role=UserRole.VIEWER,
+                password_hash="not-used", is_active=True)
+    db.add(user)
+    db.commit()
+    client.headers.update({"Authorization": f"Bearer {create_access_token(user, utcnow())}"})
+    return client

@@ -31,6 +31,9 @@ export const GRID_COLOR = "var(--color-line)";
 export const RULE_COLOR = "var(--color-line-strong)";
 /** The ring around hover dots, so they stay legible where lines cross. */
 export const SURFACE_COLOR = "var(--color-surface)";
+/** Event annotations: holidays as rules, promotions as washes (tokens.css). */
+export const ANNOTATION_COLOR = "var(--color-annotation)";
+export const ANNOTATION_BAND_COLOR = "var(--color-annotation-band)";
 /** Hover band behind a bar group. */
 export const CURSOR_FILL = "var(--color-surface-muted)";
 

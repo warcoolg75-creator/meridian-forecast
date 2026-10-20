@@ -1,17 +1,21 @@
-import { Link, useMatches } from "react-router";
+import type { ReactNode } from "react";
+import { Link, useMatches, type UIMatch } from "react-router";
 
 import { cn } from "../../lib/cn";
 
-/** Give a route `handle: { crumb: "Products" }` and it appears in the breadcrumb. */
+/**
+ * Give a route `handle: { crumb: "Products" }` and it appears in the breadcrumb. A
+ * function crumb renders from the match (its params), e.g. a product's name.
+ */
 export interface CrumbHandle {
-  crumb: string;
+  crumb: string | ((match: UIMatch) => ReactNode);
 }
 
 function isCrumbHandle(handle: unknown): handle is CrumbHandle {
   return (
     typeof handle === "object" &&
     handle !== null &&
-    typeof (handle as { crumb?: unknown }).crumb === "string"
+    ["string", "function"].includes(typeof (handle as { crumb?: unknown }).crumb)
   );
 }
 
@@ -22,7 +26,10 @@ function isCrumbHandle(handle: unknown): handle is CrumbHandle {
 export function Breadcrumbs({ className }: { className?: string }) {
   const crumbs = useMatches()
     .filter((match) => isCrumbHandle(match.handle))
-    .map((match) => ({ label: (match.handle as CrumbHandle).crumb, to: match.pathname }));
+    .map((match) => {
+      const crumb = (match.handle as CrumbHandle).crumb;
+      return { label: typeof crumb === "function" ? crumb(match) : crumb, to: match.pathname };
+    });
   return (
     <nav aria-label="Breadcrumb" className={cn("min-w-0", className)}>
       <ol className="flex min-w-0 items-center gap-2 text-step-n1">

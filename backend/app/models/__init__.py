@@ -5,7 +5,7 @@ from app.models.enums import Channel, EventType, RegionLevel, SalesSource, UserR
 from app.models.events import CalendarEvent
 from app.models.geography import Region
 from app.models.manufacturing import Inventory, LineCapability, Plant, ProductionLine, ProductionRun
-from app.models.sales import Customer, DailySales, SalesOrder, SalesOrderLine
+from app.models.sales import Customer, DailySales, MonthlySales, SalesOrder, SalesOrderLine, WeeklySales
 
 __all__ = [
     "Base",
@@ -16,6 +16,7 @@ __all__ = [
     "EventType",
     "Inventory",
     "LineCapability",
+    "MonthlySales",
     "Plant",
     "Product",
     "ProductionLine",
@@ -28,4 +29,5 @@ __all__ = [
     "SalesSource",
     "User",
     "UserRole",
+    "WeeklySales",
 ]

@@ -94,6 +94,13 @@
   --color-series-3: var(--color-maroon-900);
   /* Confidence band: the primary series' maroon as a wash, never a second colour. */
   --color-band: color-mix(in srgb, var(--color-maroon-500) 14%, transparent);
+  /*
+   * Event annotations on a chart (holidays as rules, promotions as washes). ink-400: it
+   * separates from maroon-500 (deltaE 18.1, CLAUDE.md) and is used only on charts whose
+   * series do not already use ink-400 (one series, e.g. a product's history).
+   */
+  --color-annotation: var(--color-ink-400);
+  --color-annotation-band: color-mix(in srgb, var(--color-ink-400) 18%, transparent);
 
   /* ---- Type: Fraunces for headings, Inter for body and every number ---- */
   --font-display: "Fraunces Variable", ui-serif, Georgia, serif;

@@ -18,5 +18,17 @@ class Page(BaseModel, Generic[T]):
     offset: int
 
 
+class CursorPage(BaseModel, Generic[T]):
+    """Keyset pagination envelope: pass next_cursor back as `cursor` for the next page.
+
+    next_cursor is null on the last page. There is no total: counting would cost as much
+    as reading every page.
+    """
+
+    items: list[T]
+    next_cursor: str | None
+    limit: int
+
+
 class ErrorResponse(BaseModel):
     detail: str

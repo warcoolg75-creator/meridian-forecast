@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   Bar,
   CartesianGrid,
@@ -49,6 +49,10 @@ export interface BarChartProps extends ChartStateProps {
   formatValue?: (value: number) => string;
   formatTick?: (value: number) => string;
   height?: ChartHeight;
+  /** Makes the bars clickable (e.g. to drill into a state). Offer a keyboard way too. */
+  onCategoryClick?: (category: string) => void;
+  actions?: ReactNode;
+  footer?: ReactNode;
 }
 
 type Row = Record<string, string | number | null>;
@@ -72,6 +76,9 @@ export function BarChart({
   formatValue = formatInteger,
   formatTick = formatCompact,
   height = "md",
+  onCategoryClick,
+  actions,
+  footer,
   ...state
 }: BarChartProps) {
   const reducedMotion = usePrefersReducedMotion();
@@ -130,6 +137,8 @@ export function BarChart({
       // Titles sit where their axes are: the vertical axis's above the plot.
       yAxisTitle={vertical ? valueAxisLabel : categoryAxisLabel}
       xAxisTitle={vertical ? categoryAxisLabel : valueAxisLabel}
+      actions={actions}
+      footer={footer}
       dataTable={
         <HiddenDataTable
           caption={`${title}. Values: ${valueAxisLabel}.`}
@@ -152,14 +161,25 @@ export function BarChart({
           role="img"
           title={`${title}. The values follow as a table.`}
           barGap={2}
+          cursor={onCategoryClick ? "pointer" : undefined}
+          onClick={
+            onCategoryClick
+              ? (state) => {
+                  const label = state?.activeLabel;
+                  if (label !== undefined && label !== null) onCategoryClick(String(label));
+                }
+              : undefined
+          }
           barCategoryGap="20%"
-          margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+          // Room on the right for the last value tick, centred on the plot's edge.
+          margin={{ top: 8, right: 24, bottom: 0, left: 0 }}
         >
           <CartesianGrid vertical={!vertical} horizontal={vertical} stroke={GRID_COLOR} />
           {vertical ? (
             <>
               <XAxis {...categoryAxis} tickMargin={8} interval={0} />
-              <YAxis {...valueAxis} width={48} />
+              {/* Sized to the widest tick, as in TimeSeriesChart. */}
+              <YAxis {...valueAxis} width="auto" />
             </>
           ) : (
             <>

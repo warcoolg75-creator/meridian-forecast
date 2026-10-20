@@ -21,7 +21,16 @@ class ImportReport(BaseModel):
     errors: list[ImportRowError]
 
 
+class PeriodRollupResult(BaseModel):
+    """Rows written to weekly_sales / monthly_sales for the periods rebuilt."""
+
+    weekly_rows: int
+    monthly_rows: int
+
+
 class RollupResult(BaseModel):
     deleted: int
     inserted: int
     skipped_for_imports: int
+    weekly_rows: int
+    monthly_rows: int

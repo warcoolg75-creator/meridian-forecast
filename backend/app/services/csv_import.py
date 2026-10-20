@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Channel, DailySales, Product, Region, SalesSource
 from app.schemas.imports import ImportReport, ImportRowError
+from app.services.rollup import rebuild_period_rollups
 
 COLUMNS = ("date", "sku", "region_code", "channel", "units", "revenue")
 TEMPLATE_CSV = ",".join(COLUMNS) + "\n2026-01-15,FDS-GFB-1KG,IN-DL-NDL,retail,12,14388.00\n"
@@ -184,6 +185,8 @@ def import_sales_csv(session: Session, raw: bytes, today: date | None = None) ->
         return _rejected(0, 0, [ImportRowError(row=None, column=None, value=None, message="File has no data rows")])
 
     inserted, updated = _upsert(session, valid)
+    # Same transaction: the weekly and monthly rollups never disagree with daily_sales.
+    rebuild_period_rollups(session, min(row.date for row in valid), max(row.date for row in valid))
     session.commit()
     return ImportReport(status="imported", rows_received=rows_received, rows_valid=len(valid),
                         inserted=inserted, updated=updated, error_count=0, errors_truncated=False, errors=[])

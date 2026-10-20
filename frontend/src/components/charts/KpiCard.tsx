@@ -15,8 +15,15 @@ export interface KpiCardProps {
   formatValue?: (value: number) => string;
   /** Relative change against the comparison period, as a fraction: 0.062 is +6.2%. */
   delta?: number | null;
-  /** Whether a rise is good news. False for stockouts, returns, forecast error. */
-  upIsGood?: boolean;
+  /**
+   * Whether a rise is good news. False for stockouts, returns, forecast error. null:
+   * neither (e.g. average selling price): the arrow shows the direction, in ink.
+   */
+  upIsGood?: boolean | null;
+  /** Said instead of a delta when there is none, e.g. why no comparison is shown. */
+  deltaNote?: string;
+  /** A small note under the figure, e.g. how a figure is costed. */
+  footnote?: string;
   /** Names the comparison period, e.g. "vs previous 4 weeks". */
   comparison?: string;
   /** Recent values, oldest first, drawn as a trend line under the figure. */
@@ -58,6 +65,8 @@ export function KpiCard({
   error,
   onRetry,
   emptyMessage = "No data for this period.",
+  deltaNote,
+  footnote,
 }: KpiCardProps) {
   return (
     <Card className="flex flex-col gap-3">
@@ -91,12 +100,14 @@ export function KpiCard({
       ) : (
         <>
           <p className="text-step-4 font-semibold text-fg figure">{formatValue(value)}</p>
-          {typeof delta === "number" && (
+          {typeof delta === "number" ? (
             <Delta
               delta={delta}
               upIsGood={upIsGood}
               comparison={comparison ?? "vs previous period"}
             />
+          ) : (
+            deltaNote && <p className="text-step-n2 text-fg-muted">{deltaNote}</p>
           )}
           {sparkline && sparkline.length > 1 && (
             <Sparkline
@@ -105,6 +116,7 @@ export function KpiCard({
               className="mt-1"
             />
           )}
+          {footnote && <p className="text-step-n2 text-fg-muted">{footnote}</p>}
         </>
       )}
     </Card>
@@ -117,17 +129,18 @@ function Delta({
   comparison,
 }: {
   delta: number;
-  upIsGood: boolean;
+  upIsGood: boolean | null;
   comparison: string;
 }) {
   const direction = directionOf(delta);
-  const good = direction !== "flat" && (direction === "up") === upIsGood;
-  const tone = direction === "flat" ? "text-fg-muted" : good ? "text-positive" : "text-negative";
+  const judged = direction !== "flat" && upIsGood !== null;
+  const good = judged && (direction === "up") === upIsGood;
+  const tone = !judged ? "text-fg-muted" : good ? "text-positive" : "text-negative";
   const shown = direction === "flat" ? formatSignedPercent(0) : formatSignedPercent(delta);
   const spoken =
     direction === "flat"
       ? `Unchanged ${comparison}`
-      : `${direction === "up" ? "Up" : "Down"} ${shown.replace(/^[+-]/, "")} ${comparison}, ${good ? "favourable" : "unfavourable"}`;
+      : `${direction === "up" ? "Up" : "Down"} ${shown.replace(/^[+-]/, "")} ${comparison}${judged ? (good ? ", favourable" : ", unfavourable") : ""}`;
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-step-n1">
       <span className={cn("inline-flex items-center gap-1 font-medium", tone)}>

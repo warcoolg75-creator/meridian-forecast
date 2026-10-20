@@ -76,12 +76,15 @@ export function Popover({
     <div
       ref={root}
       className="relative w-full sm:w-auto"
-      // Tabbing to something outside closes it. A null relatedTarget is a click on a
-      // non-focusable spot (a label, the panel's padding) that drops focus to <body>:
-      // clicks outside are the pointerdown listener's job, so that must not close it.
+      // Tabbing to something outside closes it. Pressing on a non-focusable spot inside
+      // the panel (a label, its padding) moves focus to the nearest focusable ancestor:
+      // <body>, or <main>, which is focusable (tabIndex -1) for focus after navigation.
+      // That is not leaving, so a null relatedTarget or an ancestor must not close it;
+      // clicks outside are the pointerdown listener's job.
       onBlur={(event) => {
         const next = event.relatedTarget as Node | null;
-        if (open && next && !event.currentTarget.contains(next)) setOpen(false);
+        const self = event.currentTarget;
+        if (open && next && !self.contains(next) && !next.contains(self)) setOpen(false);
       }}
     >
       <button

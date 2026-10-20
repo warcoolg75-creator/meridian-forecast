@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, type UIMatch } from "react-router";
 
 import { RedirectIfSignedIn } from "./auth/RedirectIfSignedIn";
 import { RequireAuth } from "./auth/RequireAuth";
@@ -7,6 +7,8 @@ import { AppLayout } from "./components/shell/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
 import Forecast from "./pages/app/Forecast";
 import Planning from "./pages/app/Planning";
+import { ProductCrumb } from "./pages/app/ProductCrumb";
+import ProductDetail from "./pages/app/ProductDetail";
 import Products from "./pages/app/Products";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -37,7 +39,20 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <Dashboard />, handle: { crumb: "Dashboard" } },
-          { path: "products", element: <Products />, handle: { crumb: "Products" } },
+          {
+            path: "products",
+            handle: { crumb: "Products" },
+            children: [
+              { index: true, element: <Products /> },
+              {
+                path: ":sku",
+                element: <ProductDetail />,
+                handle: {
+                  crumb: (match: UIMatch) => <ProductCrumb sku={match.params.sku ?? ""} />,
+                },
+              },
+            ],
+          },
           { path: "forecast", element: <Forecast />, handle: { crumb: "Forecast" } },
           {
             // Production planning changes the plan: admins and planners only, as on the API.

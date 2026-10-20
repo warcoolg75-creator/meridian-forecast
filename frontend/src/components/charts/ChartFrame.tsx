@@ -25,6 +25,8 @@ export function ChartFrame({
   yAxisTitle,
   xAxisTitle,
   dataTable,
+  actions,
+  footer,
   children,
 }: {
   title: string;
@@ -32,6 +34,10 @@ export function ChartFrame({
   height: ChartHeight;
   view: ChartView;
   legend?: ReactNode;
+  /** Controls for this chart (e.g. a metric toggle), beside the title. */
+  actions?: ReactNode;
+  /** Shown under the plot when it is drawn, e.g. a note on what the data cannot say. */
+  footer?: ReactNode;
   /** Value axis or vertical axis title, with its unit: shown above the plot. */
   yAxisTitle: string;
   /** Horizontal axis title, with its unit: shown below the plot. */
@@ -45,14 +51,17 @@ export function ChartFrame({
   return (
     <Card>
       <figure aria-labelledby={`${id}-title`} aria-describedby={`${id}-desc`} className="space-y-4">
-        <figcaption className="space-y-1">
-          <p id={`${id}-title`} className="font-display text-step-1 font-semibold text-fg">
-            {title}
-          </p>
-          <p id={`${id}-desc`} className="max-w-3xl text-step-n1 text-fg-muted">
-            {description}
-          </p>
-        </figcaption>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <figcaption className="min-w-0 space-y-1">
+            <p id={`${id}-title`} className="font-display text-step-1 font-semibold text-fg">
+              {title}
+            </p>
+            <p id={`${id}-desc`} className="max-w-3xl text-step-n1 text-fg-muted">
+              {description}
+            </p>
+          </figcaption>
+          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        </div>
         {view.kind === "ready" && (
           <>
             {legend}
@@ -61,6 +70,7 @@ export function ChartFrame({
               <div className={box}>{children}</div>
               <p className="text-right text-step-n2 text-fg-muted">{xAxisTitle}</p>
             </div>
+            {footer}
             {dataTable}
           </>
         )}

@@ -8,7 +8,8 @@ The project is built in 10 phases. Build only what the current phase asks for.
 Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system, was
 deferred until after it and is closed (2026-10-13). Phase 2, the public brand page and
 authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI component
-library, is built (2026-10-13). Phase 4 has not started.
+library, is built (2026-10-13). Phase 4, sales analytics, is built (2026-10-20). Phase 5
+has not started.
 
 ## Stack
 
@@ -47,6 +48,10 @@ its reason names, and re-run `make build` and `make lint`.
 ## Commands (run from the repo root)
 
 - `make venv` / `make migrate` / `make seed` / `make rollup` / `make test` / `make run`
+- `make rollup-periods`: rebuild only `weekly_sales` / `monthly_sales` from the existing
+  `daily_sales` (it never touches `daily_sales`; `make rollup` rebuilds both).
+- `make verify-analytics`: recompute every analytics figure in pandas straight from the
+  tables and compare it with the running API (`make run` first). Exit 1 on any mismatch.
 - Frontend: `make dev` (API on :8000 plus Vite on http://127.0.0.1:5173, which proxies
   `/api`), `make web` (Vite only), `make build` (token checks, ESLint, type check, then
   `frontend/dist`), `make lint` (token checks, ESLint, Prettier). These run `npm ci` first
@@ -55,8 +60,17 @@ its reason names, and re-run `make build` and `make lint`.
 - On Windows `make` is not on PATH: use `C:\msys64\usr\bin\make.exe`, or run the
   wrapped command directly, e.g. `cd backend && python -m app.cli seed`. Run it from
   PowerShell (see the PATH note under Environment notes for the frontend targets).
-- With `.env` present, `make test` runs against the hosted PostgreSQL (and wipes its
-  seeded data). For a SQLite-only run: `$env:TEST_DATABASE_URL = 'sqlite-only-run'` first.
+- **`make test`, and any bare `pytest`, runs on SQLite. Always, `.env` or not.**
+  PostgreSQL is opt-in on the command line only: `make test-pg`, i.e. `MERIDIAN_PG_TESTS=1`
+  (exactly "1") in pytest's environment. It drops and recreates this project's tables on
+  `TEST_DATABASE_URL`, wiping the hosted copy of the pinned dataset; reseed afterwards.
+  `.env` supplies the URL, never the decision. Why: until phase 4 the URL in `.env` alone
+  switched the suite to PostgreSQL, and on 2026-10-20 a bare pytest emptied Supabase.
+  Without the opt-in, `tests/conftest.py` also refuses any non-SQLite connection
+  (SQLAlchemy `do_connect`) and any lookup of or connection to another machine (an audit
+  hook; psycopg resolves host names in Python, so the hook sees them), and
+  `tests/test_test_database_guard.py` proves both. Proof run (2026-10-20): the full suite
+  with `.env` present and no flag made 0 lookups of or connections to the hosted host.
 - `make seed` always regenerates the **pinned dataset**: seed 42, history
   2023-10-09..2026-10-08 (`SEED` / `END_DATE` in the Makefile, `DEFAULT_SEED` /
   `DEFAULT_END_DATE` in `backend/app/seed/ground_truth.py`; a test keeps them in sync).
@@ -97,9 +111,9 @@ its reason names, and re-run `make build` and `make lint`.
 - After moving the repo, re-run `pip install -e . --no-deps` from `backend/`: the venv's
   editable install stores the absolute source path.
 - `DATABASE_URL` unset = SQLite at `backend/meridian.db`. `TEST_DATABASE_URL` (env or
-  repo-root `.env`, gitignored) pointing at PostgreSQL runs the whole suite there plus the
-  cross-dialect tests; unset, those tests are skipped (never delete them). The PG fixture
-  drops only this project's tables, never the schema. The file must be named exactly
+  repo-root `.env`, gitignored) names the PostgreSQL database `make test-pg` runs the
+  whole suite on, plus the cross-dialect tests; without the opt-in those tests are skipped
+  (never delete them). The PG fixture drops only this project's tables, never the schema. The file must be named exactly
   `.env`: Notepad's `.env.txt` is neither read by the app nor covered by `.gitignore`.
 - The hosted test database is Supabase, reached through the **session pooler** in
   ap-south-1 (port 5432). Do not switch to the direct endpoint: it is IPv6-only on the
@@ -109,12 +123,14 @@ its reason names, and re-run `make build` and `make lint`.
   never verified). Collation is `en_US.UTF-8` while SQLite compares
   bytes, so `ORDER BY` on strings can differ between the two once codes put punctuation
   in different positions; today's SKUs and region codes sort identically.
-- That database is also the PG fixture's scratch space: with `.env` present, `make test`
-  drops and recreates the tables, wiping anything `make seed` put there. The full suite
-  takes ~7-9 min there. `make seed` against it is network-bound: 58-148 s measured over
-  Wi-Fi (vs ~10-13 s on SQLite), and one run lost its connection mid-insert (the seed is
-  one transaction, so it rolled back cleanly; rerun it). The pinned dataset takes
-  ~106 MB of the free tier's 500 MB.
+- That database is also the PG fixture's scratch space: `make test-pg` drops and
+  recreates the tables, wiping anything `make seed` put there. The full suite takes
+  ~7-9 min there. `make seed` against it (`DATABASE_URL` set to it) is network-bound:
+  58-301 s measured over Wi-Fi (vs ~10-13 s on SQLite), and one run lost its connection
+  mid-insert (the seed is one transaction, so it rolled back cleanly; rerun it). The
+  pinned dataset takes ~106 MB of the free tier's 500 MB. Last reseeded 2026-10-20 after
+  the wipe: 207,981 `daily_sales` rows, `weekly_sales` / `monthly_sales` equal to their
+  GROUP BY, `ground_truth.json` byte-identical.
 
 ## Design rules established in phase 1
 
@@ -274,7 +290,9 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
 `normal-nums` for category words; axis titles as HTML above (vertical axis) and below
 (horizontal axis) the plot. Compact ticks use three significant digits (2,250 is
 "2.25K", not a rounded "2.3K"). Recharts animations are off under prefers-reduced-motion
-(`usePrefersReducedMotion`).
+(`usePrefersReducedMotion`). Value axes are `width="auto"` (sized to the widest tick): a
+fixed 48px cut the rupee sign off "₹2.25Cr". The time series keeps 32px on the right for
+its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
 
 ## App shell and component library (phase 3)
 
@@ -307,10 +325,17 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
 - **`sr-only` goes on a wrapper, never on a `<table>`**: a table ignores the 1px width
   and grows to its content. The hidden chart tables did this and made the page 1157px
   wide at 360px.
-- **Popover blur**: closing on blur must ignore a null `relatedTarget`. Clicking a label
-  or padding inside the panel drops focus to `<body>`, and treating that as "left" closed
-  the date picker before "Custom range" could open (clicks outside are handled by the
-  pointerdown listener).
+- **Popover blur**: closing on blur must ignore a null `relatedTarget` **and an
+  ancestor of the popover**. Pressing on a label or padding inside the panel moves focus to
+  the nearest focusable ancestor: `<body>`, or `<main>`, which is focusable (tabIndex -1)
+  since the phase-3 focus fix. Treating that as "left" closed the panel before the click
+  landed: in phase 3 "Custom range" never opened, in phase 4 no date preset or multi-select
+  choice applied in the app (the styleguide has no focusable `<main>`, so it passed
+  there). Clicks outside are the pointerdown listener's job.
+- **Absolutely positioned content inside a scroll container needs a positioned ancestor
+  inside it**: `sr-only` text in a table cell escaped the table's `overflow-auto` (its
+  containing block was the page) and widened the products page to 873px at 360px.
+  DataTable's scroll container is `relative` for this reason.
 - `KpiCard`: the arrow shows direction, the colour whether it is good; `upIsGood={false}`
   for stockouts, returns, forecast error. Anything that rounds to 0.0% is flat (ink).
 - `DataTable` is controlled (sort, page); `useClientTable` does both in the browser for
@@ -322,6 +347,89 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
 - `/styleguide/components` shows every component in every state on
   `pages/styleguide/fixtures.ts`: invented data, products with "FX-" SKUs, marked as
   fixtures on the page. Only the styleguide may import it.
+
+## Sales analytics (phase 4)
+
+- **Endpoints** (`/api/v1/analytics/coverage|summary|timeseries|products|regions|channels`,
+  `GET /api/v1/products/{sku}`): signed-in users only, any role. `/sales/daily` now
+  requires sign-in too (sales data is not public); the product list and regions stay
+  public master data. All take `date_from`, `date_to`, `skus`, `regions` (any level; a
+  state includes its cities), `channels`, `granularity`, `comparison`. Defaults: `date_to`
+  = the last day with data, `date_from` = 13 weeks before it; a range past the history is
+  clipped to it, so a comparison never sets a partial period against a full one.
+- **Every sum is in the database**, one statement per question. Python only divides
+  (shares, growth), ranks, classifies and zero-fills buckets.
+- **Reads go through `app/services/sales_source.py`**: whole weeks / months from
+  `weekly_sales` / `monthly_sales`, edge days from `daily_sales`. The rollups are pure
+  GROUP BYs of `daily_sales`, rebuilt for the touched periods by the rollup job and by CSV
+  imports in the same transaction (`rebuild_period_rollups`); `tests/test_period_rollups.py`
+  asserts they always match. Anything new that writes `daily_sales` must call it.
+- **Comparison**: `same_period_last_year` (default) is the same days **364 days (52 weeks)
+  earlier**, so weekdays line up (the data has a day-of-week profile); `previous_period`
+  is the window of equal length just before. Each chart bucket is compared with exactly
+  its own days shifted back (bucket of `d + shift`). When the comparison window reaches
+  before the history, every change is null and the UI says why (`comparison.complete`).
+- **Moving festivals**: the 364-day shift aligns weekdays, not festivals (Diwali: 12 Nov
+  2023, 31 Oct 2024, 20 Oct 2025). For `same_period_last_year` the time series returns
+  `moving_events`: holidays and festivals whose two dates differ by more than 3 days once
+  shifted (fixed-date holidays move 1-2 days and are left out), or that fall in only one
+  period. The dashboard names them under the year-over-year chart.
+- **Orders = `COUNT` of `sales_orders`**, never `SUM(daily_sales.order_count)`, which
+  counts an order once per product line: 350,104 lines vs 223,271 orders (+57%). A SKU
+  filter is an EXISTS on the order's lines. CSV-imported sales carry no orders.
+- **Gross margin = revenue - units x the product's unit cost** = (price actually paid -
+  unit cost) x units, so discounts count. Average selling price = revenue / units.
+- **ABC-XYZ** (`app/services/analytics/classify.py`, thresholds as named constants):
+  - ABC by revenue share over the requested period: walking down the revenue ranking, a
+    product is A while the share of the products above it is under 80%, B under 95%, C
+    after. The product that crosses 80% (or 95%) is in the higher class; the top product
+    is always A.
+  - XYZ by the coefficient of variation (sample std / mean) of weekly units: X < 0.5,
+    Y 0.5-1.0, Z > 1.0, over a **fixed** trailing 52 full weeks ending on or before
+    `date_to`, counting only weeks starting on or after launch and inside the history,
+    missing weeks as zero; under 13 such weeks: not yet classifiable (null).
+  - Why fixed: over the default 13-week window every one of the 12 SKUs was X (3 months
+    cannot show a seasonal cycle); over 52 weeks: X 7, Y 4, Z 1, stable at other end dates.
+    Why "since launch": the Air Fryer (launched 2026-02-08) read CV 0.95 over 52 weeks and
+    2.20 over 3 years from pre-launch zeros; since launch it is 0.53.
+  - **XYZ here measures volume variability, not predictability.** A seasonal SKU with a
+    regular, forecastable festival peak lands in Z (the Gift Box, CV ~1.6). **Phase 5
+    should reclassify on the CV of forecast errors** once forecasts exist.
+- **Pagination**: `/sales/daily` is keyset-paged (`cursor` / `next_cursor`, no `offset`
+  or `total`); see Known issues for the measurements.
+- **SQLite performance notes** (the local p95 target is 300 ms per call):
+  - `MIN(x), MAX(x)` in one SELECT scans the table; two ordered `LIMIT 1` subqueries use
+    the index (`data_bounds`: 21-100 ms down to 0.1 ms, paid by every call).
+  - Date arithmetic is string functions on SQLite: sum per (window, date) first, then
+    shift and bucket the few hundred grouped rows.
+  - The comparison series reads whole weeks from `weekly_sales` wherever a shifted week
+    stays in one bucket (`shifted_row_selects`); only weeks straddling a month boundary
+    are read day by day.
+  - Measured locally over HTTP (2026-10-20, 30 requests each): every dashboard call
+    p95 <= 136 ms for 13- and 52-week views, weekly and monthly (34 ms on a run without
+    throttling). This laptop drops its clock after a few seconds of load, so timings vary
+    up to 4x between runs.
+- **On the hosted PostgreSQL** (2026-10-20, every transaction READ ONLY, in-process
+  client on this laptop, 30 requests per call): p50 197-486 ms, p95 297-1,702 ms. That
+  is the network: 35-55 ms per round trip and 5-9 round trips per request (pool pre-ping,
+  BEGIN, 1-5 statements, ROLLBACK, plus the harness's two read-only checks), with Wi-Fi
+  spikes in the p95. The database itself spends 0.2-46 ms per call (EXPLAIN ANALYZE,
+  planning + execution; the slowest is a 52-week summary). Its answers equal SQLite's for
+  all 24 calls (3,089 values). An API deployed next to the database would see roughly the
+  server time plus a few sub-millisecond round trips.
+- **Verification**: `make verify-analytics` compares 1,816 figures over 5 filter
+  combinations (incl. a state that must include its cities, a channel, two SKUs against
+  the previous period, a city by month) plus the seasonal peaks: each seasonal SKU's peak
+  month in every season wholly inside the history matches the peak of
+  `expected_cell_demand` (a month within 3% of the expected peak counts as a tie).
+- **Frontend**: filter state lives in the URL (`pages/app/useAnalyticsView.ts`): `range`
+  (a preset, re-resolved against the latest data) or `range=custom&from&to`, repeated
+  `sku` / `region` / `channel`, `g`, `compare=previous`; page keys `metric`, `sort` /
+  `order`, `drill`. Rupees use Indian grouping (`formatRupees`) in tables and tooltips,
+  compact lakh / crore on KPI cards. No map: ranked bars and tables answer "where".
+- Chart annotation tokens: `--color-annotation` (ink-400) and `--color-annotation-band`
+  (ink-400 at 18%) mark holidays (rules) and promotions (washes). Only on charts whose
+  series do not use ink-400, i.e. single-series charts such as a product's history.
 
 ## Authentication rules established in phase 2
 
@@ -341,7 +449,9 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
   with Retry-After. Unknown emails are limited too. A success resets the count. See
   Known issues.
 - Roles: `require_role(*roles)` in `app/api/deps.py` (401 signed out, 403 wrong role).
-  `POST /api/v1/imports/sales` is admin and planner only; read endpoints are still public.
+  `POST /api/v1/imports/sales` is admin and planner only. Since phase 4 sales data
+  (`/sales/daily`, `/analytics/*`, `/products/{sku}`) needs any signed-in role; the product
+  list and regions stay public.
   On the frontend `<RequireAuth roles=...>` mirrors this: `/app/planning` is admin and
   planner only.
 - `JWT_SECRET` signs the tokens. Unset, a dev-only key is generated once into
@@ -359,13 +469,17 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
 
 ## Known issues
 
-- **`/sales/daily` deep pagination re-runs the full aggregation for every page.** Each
-  request recomputes the count and the whole GROUP BY, then OFFSETs into it. Paging
-  through the day-level sku x region x channel breakdown (207,981 rows, 21 pages of
-  10,000) took 255 s on the hosted PostgreSQL vs 31 s on SQLite (2026-10-11). Results are
-  correct; only speed suffers. Fix in phase 4, when the dashboard starts querying
-  `/sales/daily`: likely keyset pagination or a cached aggregate. Deliberately not fixed
-  in phase 1.
+- **Resolved in phase 4: `/sales/daily` deep pagination.** OFFSET paging re-ran the
+  count and the whole GROUP BY for every page. Measured 2026-10-17 on the day-level sku x
+  region x channel breakdown (207,981 rows, 21 pages of 10,000): 12.4 s on SQLite and
+  about 42 s on the hosted PostgreSQL (3 pages timed, 2.0 s each; 255 s on 2026-10-11).
+  Now keyset-paged down the unique index: 0.49 s and 3.3 s for all 21 pages. Week and
+  month groupings read `weekly_sales` / `monthly_sales` (36,613 / 9,016 rows): the 4 weekly
+  pages take 73 ms on SQLite instead of about 0.78 s each.
+- **Gross margin uses today's unit cost for every period.** `products.unit_cost_minor` is
+  the only cost the schema keeps, so past margins are costed at today's cost; a cost change
+  silently restates history. The margin KPIs say so in their caption. Fix: a dated cost
+  history (product, valid_from, unit_cost_minor) and a per-day cost join.
 - **The login rate limiter is in-memory, per process** (`app/services/rate_limit.py`). It
   is correct for one uvicorn process. A restart clears every count, and several workers
   would each keep their own, multiplying the effective limit by the worker count. Running
