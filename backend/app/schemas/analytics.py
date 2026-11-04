@@ -78,6 +78,19 @@ class TimeseriesPoint(BaseModel):
     revenue_minor: int
     baseline_units: int
     baseline_revenue_minor: int
+    baseline_days_covered: int = Field(
+        description="How many of this bucket's days have comparison history (see baseline_history): equal "
+                    "to days_covered when the comparison is whole, fewer when partial, 0 when missing"
+    )
+
+
+class BaselineHistory(BaseModel):
+    """Where the comparison's history begins: the first day of data or, when the rows are
+    filtered to products, the earliest launch among them if that is later. A comparison day
+    before it has no sales to compare with, not zero sales."""
+
+    first_date: date
+    starts_with: Literal["data", "launch"]
 
 
 class MovingEvent(BaseModel):
@@ -101,6 +114,7 @@ class TimeseriesResponse(BaseModel):
     comparison: ComparisonInfo
     granularity: Granularity
     points: list[TimeseriesPoint]
+    baseline_history: BaselineHistory | None = Field(description="Null when there is no data at all")
     moving_events: list[MovingEvent] = Field(
         description="Only for same_period_last_year: festivals whose date moved by more than 3 days"
     )

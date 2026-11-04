@@ -15,6 +15,14 @@ const signedPercent = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 1,
   signDisplay: "exceptZero",
 });
+// Axis ticks for a change: as few decimals as the step needs ("+20%", "−12.5%").
+const signedPercentTick = new Intl.NumberFormat("en-IN", {
+  style: "percent",
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+/** A true minus sign (U+2212), the width of a plus, where Intl writes a hyphen. */
+const MINUS = String.fromCharCode(0x2212);
 const percent = new Intl.NumberFormat("en-IN", {
   style: "percent",
   minimumFractionDigits: 1,
@@ -42,9 +50,14 @@ export function formatCompact(value: number): string {
   return compact.format(value);
 }
 
-/** A fraction as a signed percentage: 0.062 -> "+6.2%", 0 -> "0.0%". */
+/** A fraction as a signed percentage: 0.062 -> "+6.2%", -0.05 -> "−5.0%", 0 -> "0.0%". */
 export function formatSignedPercent(fraction: number): string {
-  return signedPercent.format(fraction);
+  return signedPercent.format(fraction).replace("-", MINUS);
+}
+
+/** A change on an axis: 0.2 -> "+20%", -0.125 -> "−12.5%", 0 -> "0%". */
+export function formatSignedPercentTick(fraction: number): string {
+  return signedPercentTick.format(fraction).replace("-", MINUS);
 }
 
 /** A fraction as a percentage: 0.062 -> "6.2%". */

@@ -1,6 +1,8 @@
 /** Wording and options shared by the analytics pages. */
 import {
   CHANNEL_LABELS,
+  COMPARISON_LABELS,
+  type BaselineHistory,
   type CatalogProduct,
   type CatalogRegion,
   type Channel,
@@ -68,6 +70,44 @@ export function partialCaption(points: TimeseriesPoint[], granularity: Granulari
       : `${parts[0] === first ? "first" : "last"} ${unit} is`;
   const counts = parts.map((p) => p.days_covered).join(" and ");
   return `The ${which} partial (${counts} of ${days(parts[0])} days), so ${parts.length === 2 ? "they read" : "it reads"} low; the comparison covers the same days.`;
+}
+
+/**
+ * Both charts that sit together (a time series and its change strip) fix their value axes
+ * to this width, so the strip's bars line up under the series' points. It fits the
+ * widest tick either draws ("₹2.25Cr", "−12.5%").
+ */
+export const ALIGNED_AXIS_WIDTH = 64;
+
+/**
+ * One bucket's change against the comparison, or why there is none: the comparison days
+ * lie before the history (or before the product launched), only some of them have
+ * history, or nothing sold then. Rule: such buckets get no colour, only the reason.
+ */
+export function bucketChange(
+  point: TimeseriesPoint,
+  current: number,
+  baseline: number,
+  history: BaselineHistory | null | undefined,
+  mode: ComparisonMode,
+): { value: number | null; reason?: string } {
+  const then = COMPARISON_LABELS[mode].toLowerCase();
+  const since = history
+    ? history.starts_with === "launch"
+      ? `the product launched on ${formatDate(history.first_date)}`
+      : `the sales history starts on ${formatDate(history.first_date)}`
+    : "there is no sales history";
+  if (point.baseline_days_covered === 0) {
+    return { value: null, reason: `The ${then} falls before ${since}.` };
+  }
+  if (point.baseline_days_covered < point.days_covered) {
+    return {
+      value: null,
+      reason: `Partial comparison: only ${point.baseline_days_covered} of ${point.days_covered} days of the ${then} come after ${since}.`,
+    };
+  }
+  if (baseline === 0) return { value: null, reason: `Nothing sold in the ${then}.` };
+  return { value: current / baseline - 1 };
 }
 
 export function filterOptions(products: CatalogProduct[], regions: CatalogRegion[]) {

@@ -68,6 +68,14 @@ export interface TimeseriesPoint {
   revenue_minor: number;
   baseline_units: number;
   baseline_revenue_minor: number;
+  /** Days of this bucket whose comparison day has history: < days_covered is partial, 0 none. */
+  baseline_days_covered: number;
+}
+
+/** Where comparison history starts: the data's first day, or the filtered products' launch. */
+export interface BaselineHistory {
+  first_date: IsoDate;
+  starts_with: "data" | "launch";
 }
 
 export interface MovingEvent {
@@ -84,6 +92,7 @@ export interface TimeseriesResponse {
   comparison: ComparisonInfo;
   granularity: Granularity;
   points: TimeseriesPoint[];
+  baseline_history: BaselineHistory | null;
   moving_events: MovingEvent[];
 }
 
@@ -202,6 +211,7 @@ export interface CatalogProduct {
   name: string;
   category: string;
   is_active: boolean;
+  launched_on: IsoDate;
 }
 
 export interface CatalogRegion {

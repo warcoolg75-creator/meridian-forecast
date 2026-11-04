@@ -34,6 +34,16 @@ export const SURFACE_COLOR = "var(--color-surface)";
 /** Event annotations: holidays as rules, promotions as washes (tokens.css). */
 export const ANNOTATION_COLOR = "var(--color-annotation)";
 export const ANNOTATION_BAND_COLOR = "var(--color-annotation-band)";
+/**
+ * Up and down against the comparison period: the positive (sage) and negative (clay)
+ * tokens. They encode the sign of a difference and nothing else: never a series, and
+ * never on or beside a maroon series (CLAUDE.md, Chart rules, has the measured ΔE).
+ * Position about the zero line carries the meaning; colour only reinforces it.
+ */
+export const UP_COLOR = "var(--color-positive)";
+export const DOWN_COLOR = "var(--color-negative)";
+/** A change that rounds to 0.0%, and the no-comparison marker: neutral ink. */
+export const NEUTRAL_MARK_COLOR = "var(--color-line-strong)";
 /** Hover band behind a bar group. */
 export const CURSOR_FILL = "var(--color-surface-muted)";
 

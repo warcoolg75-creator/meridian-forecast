@@ -29,8 +29,10 @@ import {
   formatInteger,
   formatRupees,
 } from "../../lib/format";
-import { ComparisonToggle, ViewFilters } from "./analytics/Controls";
+import { ChangeStrip } from "./analytics/ChangeStrip";
+import { ComparisonToggle, MovingFestivalsNote, ViewFilters } from "./analytics/Controls";
 import {
+  ALIGNED_AXIS_WIDTH,
   COMPARISON_PHRASE,
   deltaNote,
   partialCaption,
@@ -53,6 +55,9 @@ function scopeOf(event: ProductEvent): string {
   if (event.scope === "regional") return event.region_code ?? "Regional";
   return "National";
 }
+
+/** The sales history and its change strip hover together. */
+const SYNC = "product-over-time";
 
 const EVENT_COLUMNS: Column<ProductEvent>[] = [
   {
@@ -226,6 +231,9 @@ export default function ProductDetail() {
         xAxisLabel={X_AXIS_LABEL[granularity]}
         formatTick={formatCompact}
         height="lg"
+        yAxisWidth={ALIGNED_AXIS_WIDTH}
+        alignToBars
+        syncId={SYNC}
         isLoading={loading(series)}
         error={series.error}
         onRetry={() => void series.refetch()}
@@ -238,6 +246,20 @@ export default function ProductDetail() {
             </p>
           )
         }
+      />
+
+      <ChangeStrip
+        series={series.data}
+        metric="units"
+        mode={view.comparison}
+        granularity={granularity}
+        period={period}
+        syncId={SYNC}
+        isLoading={loading(series)}
+        error={series.error}
+        onRetry={() => void series.refetch()}
+        // A festival on a different date last year makes a week look up or down.
+        footer={<MovingFestivalsNote events={series.data?.moving_events ?? []} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

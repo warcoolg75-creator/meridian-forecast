@@ -1,9 +1,20 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
+import { TrendIcon } from "../brand/icons";
 import { SERIES_BG, SERIES_STROKE } from "./chart-theme";
 
-export type KeyShape = "line" | "dashed" | "bar" | "band" | "event-band" | "event-line";
+export type KeyShape =
+  | "line"
+  | "dashed"
+  | "bar"
+  | "band"
+  | "event-band"
+  | "event-line"
+  // The sign of a change: an arrow in sage or clay, and a ring for "no comparison".
+  | "up"
+  | "down"
+  | "no-comparison";
 
 /**
  * The mark beside a legend or tooltip label: identity comes from this coloured key,
@@ -18,6 +29,21 @@ export function SeriesKey({ shape, series = 0 }: { shape: KeyShape; series?: num
   }
   if (shape === "event-band") {
     return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-annotation-band" />;
+  }
+  if (shape === "up" || shape === "down") {
+    return (
+      <TrendIcon
+        direction={shape}
+        className={cn("size-4 shrink-0", shape === "up" ? "text-positive" : "text-negative")}
+      />
+    );
+  }
+  if (shape === "no-comparison") {
+    return (
+      <svg aria-hidden viewBox="0 0 12 12" className="size-3 shrink-0">
+        <circle cx="6" cy="6" r="4" fill="none" strokeWidth="1.5" className="stroke-line-strong" />
+      </svg>
+    );
   }
   if (shape === "event-line") {
     return (

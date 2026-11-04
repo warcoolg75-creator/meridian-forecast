@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.models import Product, Region, RegionLevel, SalesOrder, SalesOrderLine, WeeklySales
 from app.schemas.analytics import (
+    BaselineHistory,
     ChannelRow,
     ChannelsResponse,
     Changes,
@@ -200,13 +201,14 @@ def timeseries(session: Session, scope: Scope) -> TimeseriesResponse:
     bucket = period_start_expr(aligned, g).label("bucket")
     stmt = select(bucket, *_measures(per_day, CURRENT, False), *_measures(per_day, BASELINE, False)).group_by(bucket)
     found = {_as_date(row.bucket): row for row in session.execute(stmt)}
+    history = _baseline_history(session, scope)
+    baseline_bounds = (history.first_date, scope.bounds[1]) if history and scope.bounds else None
 
     points = []
     for start in _bucket_starts(scope.period, g):
         end = period_end(start, g)
-        covered = days_with_data(
-            Window(max(start, scope.period.date_from), min(end, scope.period.date_to)), scope.bounds
-        )
+        days = Window(max(start, scope.period.date_from), min(end, scope.period.date_to))
+        covered = days_with_data(days, scope.bounds)
         row = found.get(start)
         points.append(TimeseriesPoint(
             period_start=start,
@@ -217,14 +219,31 @@ def timeseries(session: Session, scope: Scope) -> TimeseriesResponse:
             revenue_minor=row[2] if row else 0,
             baseline_units=row[3] if row else 0,
             baseline_revenue_minor=row[4] if row else 0,
+            baseline_days_covered=days_with_data(days.shifted(scope.shift), baseline_bounds),
         ))
     return TimeseriesResponse(
         period=scope.period_info(),
         comparison=scope.comparison_info(),
         granularity=g,
         points=points,
+        baseline_history=history,
         moving_events=moving_events(session, scope),
     )
+
+
+def _baseline_history(session: Session, scope: Scope) -> BaselineHistory | None:
+    """The first day a comparison can draw on: the data's first day or, filtered to
+    products, their earliest launch if later. Before a product launched there is nothing
+    to compare with, which is not the same as selling nothing."""
+    if not scope.bounds:
+        return None
+    first = scope.bounds[0]
+    ids = scope.row_filter.product_ids
+    if ids:
+        launched = session.scalar(select(func.min(Product.launched_on)).where(Product.id.in_(sorted(ids))))
+        if launched and launched > first:
+            return BaselineHistory(first_date=launched, starts_with="launch")
+    return BaselineHistory(first_date=first, starts_with="data")
 
 
 # --------------------------------------------------------------------------- products

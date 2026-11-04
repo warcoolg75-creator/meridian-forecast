@@ -3,7 +3,9 @@ import { Link } from "react-router";
 
 import { InfoIcon } from "../../components/brand/icons";
 import { BarChart } from "../../components/charts/BarChart";
+import { DivergingBarChart } from "../../components/charts/DivergingBarChart";
 import { KpiCard } from "../../components/charts/KpiCard";
+import { SignedChange } from "../../components/charts/SignedChange";
 import { TimeSeriesChart } from "../../components/charts/TimeSeriesChart";
 import { DataTable, type Column } from "../../components/data/DataTable";
 import { useClientTable } from "../../components/data/useClientTable";
@@ -16,31 +18,29 @@ import { defaultFilters, type Filters } from "../../components/filters/filters";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { cn } from "../../lib/cn";
+import { formatCompactRupees, formatInteger, formatPercent, formatRupees } from "../../lib/format";
 import {
-  formatCompactRupees,
-  formatInteger,
-  formatPercent,
-  formatRupees,
-  formatSignedPercent,
-} from "../../lib/format";
-import {
+  changeByWeek,
   channelOptions,
   channelSeries,
   comparisonSeries,
   FIXTURE_AS_OF,
   FIXTURE_FORECAST_START,
   fourYearSeries,
+  growthByProduct,
   kpiTrend,
   productOptions,
   products,
   regionOptions,
   totalSeries,
+  twoYearSeries,
   unitsByProduct,
   unitsByProductYearOnYear,
   unitsByRegion,
   unitsByRegionAndChannel,
   unitsByYear,
   unitsSeries,
+  unitsThisYearAndLast,
   unitsWithForecast,
   yearSeries,
   type FixtureProduct,
@@ -52,6 +52,7 @@ const SECTIONS = [
   ["kpi", "KPI card"],
   ["time-series", "Time series chart"],
   ["bar", "Bar chart"],
+  ["change", "Change against a comparison"],
   ["table", "Data table"],
   ["filters", "Filter bar"],
   ["shell", "App shell"],
@@ -99,6 +100,7 @@ export default function Components() {
       <KpiSection />
       <TimeSeriesSection />
       <BarSection />
+      <ChangeSection />
       <TableSection />
       <FilterSection />
       <ShellSection />
@@ -495,6 +497,88 @@ function BarSection() {
   );
 }
 
+// ------------------------------------------------------------------------------- change
+
+/** Lines the strip up under the time series: the same value-axis width on both. */
+const CHANGE_AXIS_WIDTH = 64;
+
+function ChangeSection() {
+  const retry = useFixtureRetry();
+  const strip = {
+    title: "Units sold: change vs last year",
+    description: "Fixture: each week's units against the same week last year, as a percentage.",
+    granularity: "week" as const,
+    categoryAxisLabel: "Week starting",
+    valueAxisLabel: "Change in units sold (%)",
+    comparisonLabel: "last year",
+  };
+  return (
+    <Section
+      id="change"
+      title="Change against a comparison"
+      intro="Up and down always mean against the comparison period, never a line's own slope. Bars about a zero line: position carries the meaning, sage and clay only reinforce it, and every value also has a sign and an arrow. A period with nothing to compare with gets a neutral ring and says why. Never on or beside a maroon series: sage and clay are too close to maroon (CLAUDE.md, Chart rules)."
+    >
+      <Grid>
+        <Specimen label="Under a time series, lined up (hover either)" className="lg:col-span-2">
+          <div className="space-y-6">
+            <TimeSeriesChart
+              title="Weekly units, this year and last"
+              description="Fixture: the same 26 weeks this year and last year."
+              series={twoYearSeries}
+              data={unitsThisYearAndLast}
+              xAxisLabel="Week starting"
+              yAxisLabel="Units sold (units per week)"
+              yAxisWidth={CHANGE_AXIS_WIDTH}
+              alignToBars
+              syncId="styleguide-change"
+            />
+            <DivergingBarChart
+              {...strip}
+              data={changeByWeek}
+              yAxisWidth={CHANGE_AXIS_WIDTH}
+              syncId="styleguide-change"
+            />
+          </div>
+        </Specimen>
+        <Specimen label="Loading">
+          <DivergingBarChart {...strip} data={[]} isLoading />
+        </Specimen>
+        <Specimen label="Empty: nothing to compare with">
+          <DivergingBarChart
+            {...strip}
+            data={changeByWeek.slice(0, 2)}
+            emptyTitle="Nothing to compare with"
+            emptyMessage="Fixture: last year's history starts after these weeks."
+          />
+        </Specimen>
+        <Specimen label="Error">
+          <DivergingBarChart {...strip} data={[]} error={FIXTURE_ERROR} onRetry={retry} />
+        </Specimen>
+        <Specimen label="Signed change: up, down, flat">
+          <Card className="flex flex-wrap gap-6">
+            <SignedChange value={0.124} />
+            <SignedChange value={-0.061} />
+            <SignedChange value={0.0002} />
+          </Card>
+        </Specimen>
+        <Specimen label="Horizontal, zero in the middle" className="lg:col-span-2">
+          <DivergingBarChart
+            title="Growth by product"
+            description="Fixture: units against the same 4 weeks last year, from the largest rise to the largest fall."
+            data={growthByProduct}
+            orientation="horizontal"
+            centreZero
+            categoryAxisLabel="Product"
+            valueAxisLabel="Growth in units sold (%)"
+            comparisonLabel="last year"
+            height="lg"
+          />
+        </Specimen>
+      </Grid>
+    </Section>
+  );
+}
+
 // ------------------------------------------------------------------------------- table
 
 const PRODUCT_COLUMNS: Column<FixtureProduct>[] = [
@@ -521,15 +605,7 @@ const PRODUCT_COLUMNS: Column<FixtureProduct>[] = [
     key: "change",
     header: "Change",
     value: (p) => p.change,
-    render: (p) => (
-      <span
-        className={
-          p.change > 0 ? "text-positive" : p.change < 0 ? "text-negative" : "text-fg-muted"
-        }
-      >
-        {formatSignedPercent(p.change)}
-      </span>
-    ),
+    render: (p) => <SignedChange value={p.change} />,
     numeric: true,
     sortable: true,
   },

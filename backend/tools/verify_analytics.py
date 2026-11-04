@@ -367,13 +367,21 @@ def main() -> int:
     engine = sa.create_engine(normalize_url(get_settings().database_url))
     data = Data(engine)
     http = httpx.Client(base_url=args.base_url + "/api/v1", timeout=60)
-    login = http.post("/auth/login", json={"email": args.email, "password": args.password, "remember": False})
-    login.raise_for_status()
-    http.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
+
+    def sign_in() -> None:
+        login = http.post("/auth/login", json={"email": args.email, "password": args.password, "remember": False})
+        login.raise_for_status()
+        http.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
+
+    sign_in()
 
     def api(path: str, combo: dict, **extra) -> dict:
         params = {k: v for k, v in combo.items() if k != "name"} | extra
         response = http.get("/" + path, params=params)
+        if response.status_code == 401:
+            # The access token lives 15 minutes; a slow run (a throttled laptop) outlives it.
+            sign_in()
+            response = http.get("/" + path, params=params)
         response.raise_for_status()
         return response.json()
 

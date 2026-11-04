@@ -7,12 +7,13 @@ import {
   type ProductRow,
   type ProductSort,
 } from "../../api/analytics";
+import { SignedChange } from "../../components/charts/SignedChange";
 import { Sparkline } from "../../components/charts/Sparkline";
 import { DataTable, type Column, type SortState } from "../../components/data/DataTable";
 import { PageScaffold } from "../../components/shell/PageScaffold";
 import { Badge } from "../../components/ui/Badge";
 import { formatDate, formatRange } from "../../lib/dates";
-import { formatInteger, formatPercent, formatRupees, formatSignedPercent } from "../../lib/format";
+import { formatInteger, formatPercent, formatRupees } from "../../lib/format";
 import { ComparisonToggle, ViewFilters } from "./analytics/Controls";
 import { COMPARISON_PHRASE } from "./analytics/present";
 import { useAnalyticsView } from "./useAnalyticsView";
@@ -28,11 +29,17 @@ const SORTABLE: ProductSort[] = [
   "abc",
 ];
 
+/** Arrow, sign and colour: colour is never the only signal of up or down. */
 function growthCell(row: ProductRow) {
-  if (row.growth === null) return <span className="text-fg-muted">–</span>;
-  const tone =
-    row.growth > 0 ? "text-positive" : row.growth < 0 ? "text-negative" : "text-fg-muted";
-  return <span className={tone}>{formatSignedPercent(row.growth)}</span>;
+  if (row.growth === null) {
+    return (
+      <span className="text-fg-muted">
+        <span aria-hidden>–</span>
+        <span className="sr-only">No comparison</span>
+      </span>
+    );
+  }
+  return <SignedChange value={row.growth} />;
 }
 
 function classBadge(row: ProductRow) {

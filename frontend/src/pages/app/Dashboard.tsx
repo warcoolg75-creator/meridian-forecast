@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import {
   CHANNEL_LABELS,
   COMPARISON_LABELS,
+  useCatalog,
   useChannels,
   useCoverage,
   useProductsAnalytics,
@@ -11,13 +12,14 @@ import {
   useTimeseries,
 } from "../../api/analytics";
 import { BarChart } from "../../components/charts/BarChart";
+import { DivergingBarChart } from "../../components/charts/DivergingBarChart";
 import { KpiCard } from "../../components/charts/KpiCard";
 import { TimeSeriesChart } from "../../components/charts/TimeSeriesChart";
 import { SegmentedControl } from "../../components/filters/SegmentedControl";
 import { ErrorState } from "../../components/feedback/ErrorState";
 import { PageScaffold } from "../../components/shell/PageScaffold";
 import { Card } from "../../components/ui/Card";
-import { formatRange } from "../../lib/dates";
+import { formatDate, formatRange } from "../../lib/dates";
 import {
   errorMessage,
   formatCompact,
@@ -26,8 +28,10 @@ import {
   formatPercent,
   formatRupees,
 } from "../../lib/format";
+import { ChangeStrip } from "./analytics/ChangeStrip";
 import { ComparisonToggle, MovingFestivalsNote, ViewFilters } from "./analytics/Controls";
 import {
+  ALIGNED_AXIS_WIDTH,
   COMPARISON_PHRASE,
   deltaNote,
   partialCaption,
@@ -37,6 +41,8 @@ import {
 import { useAnalyticsView } from "./useAnalyticsView";
 
 const TOP_PRODUCTS = 10;
+/** The time series and its change strip hover together. */
+const SYNC = "dashboard-over-time";
 type Metric = "revenue" | "units";
 const METRICS: Array<{ value: Metric; label: string }> = [
   { value: "revenue", label: "Revenue" },
@@ -56,6 +62,7 @@ export default function Dashboard() {
   const products = useProductsAnalytics(view.apiParams);
   const regions = useRegions(view.apiParams);
   const channels = useChannels(view.apiParams);
+  const catalog = useCatalog();
 
   const comparisonInfo = summary.data?.comparison;
   const complete = comparisonInfo?.complete ?? true;
@@ -85,6 +92,22 @@ export default function Dashboard() {
   const points = series.data?.points ?? [];
   const isRevenue = metric === "revenue";
   const top = (products.data?.rows ?? []).slice(0, TOP_PRODUCTS);
+  // Growth by product: those with a comparison, from the largest rise to the largest fall.
+  const rows = products.data?.rows ?? [];
+  const growing = rows
+    .filter((r): r is typeof r & { growth: number } => r.growth !== null)
+    .sort((a, b) => b.growth - a.growth);
+  const then = COMPARISON_LABELS[view.comparison].toLowerCase();
+  const launched = new Map((catalog.data?.products ?? []).map((p) => [p.sku, p.launched_on]));
+  const leftOut = complete
+    ? rows
+        .filter((r) => r.growth === null)
+        .map((r) => {
+          const on = launched.get(r.sku);
+          const after = on && comparisonInfo && on > comparisonInfo.date_from;
+          return `${r.name} (${after ? `launched ${formatDate(on)}, after the ${then} began` : `nothing sold in the ${then}`})`;
+        })
+    : [];
 
   return (
     <PageScaffold
@@ -168,6 +191,9 @@ export default function Dashboard() {
         formatValue={isRevenue ? formatRupees : formatInteger}
         formatTick={isRevenue ? formatCompactRupees : formatCompact}
         height="lg"
+        yAxisWidth={ALIGNED_AXIS_WIDTH}
+        alignToBars
+        syncId={SYNC}
         isLoading={series.isPending || !view.apiParams}
         error={series.error}
         onRetry={() => void series.refetch()}
@@ -191,6 +217,18 @@ export default function Dashboard() {
         }
       />
 
+      <ChangeStrip
+        series={series.data}
+        metric={metric}
+        mode={view.comparison}
+        granularity={granularity}
+        period={period}
+        syncId={SYNC}
+        isLoading={series.isPending || !view.apiParams}
+        error={series.error}
+        onRetry={() => void series.refetch()}
+      />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <BarChart
           title="Top products"
@@ -212,6 +250,45 @@ export default function Dashboard() {
           onRetry={() => void products.refetch()}
           emptyTitle="No product sold in this period"
         />
+        <DivergingBarChart
+          title="Growth by product"
+          description={`Revenue growth per product, ${period}, ${phrase}, from the largest rise to the largest fall. Bars right of zero are up, left of zero down. Select a bar to open the product.`}
+          data={growing.map((r) => ({
+            key: r.sku,
+            label: r.name,
+            heading: r.name,
+            value: r.growth,
+            details: [
+              { label: "This period", value: formatRupees(r.revenue_minor) },
+              {
+                label: COMPARISON_LABELS[view.comparison],
+                value: formatRupees(r.baseline_revenue_minor),
+              },
+            ],
+          }))}
+          orientation="horizontal"
+          centreZero
+          categoryAxisLabel="Product"
+          valueAxisLabel="Revenue growth (%)"
+          comparisonLabel={then}
+          height="lg"
+          onCategoryClick={(sku) => void navigate(`/app/products/${sku}?${view.params}`)}
+          isLoading={products.isPending || !view.apiParams}
+          error={products.error}
+          onRetry={() => void products.refetch()}
+          emptyTitle="No growth to show"
+          emptyMessage={note ? `${note}.` : `No product sold in both this period and the ${then}.`}
+          footer={
+            leftOut.length > 0 && (
+              <p className="text-step-n2 text-fg-muted">
+                Left out, as there is nothing to compare with: {leftOut.join("; ")}.
+              </p>
+            )
+          }
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <BarChart
           title="Sales by state"
           description={`Revenue per state, ${period}; a state includes its cities.`}
@@ -231,33 +308,32 @@ export default function Dashboard() {
           onRetry={() => void regions.refetch()}
           emptyTitle="No sales in any state in this period"
         />
+        <BarChart
+          title="Channel mix"
+          description={
+            complete
+              ? `Each channel's share of revenue, ${period}, against the ${COMPARISON_LABELS[view.comparison].toLowerCase()}.`
+              : `Each channel's share of revenue, ${period}. ${note}.`
+          }
+          series={[
+            { key: "current", label: "This period" },
+            ...(complete ? [{ key: "baseline", label: COMPARISON_LABELS[view.comparison] }] : []),
+          ]}
+          data={(channels.data?.rows ?? []).map((row) => ({
+            category: CHANNEL_LABELS[row.channel],
+            values: { current: row.share, baseline: row.baseline_share },
+          }))}
+          orientation="horizontal"
+          categoryAxisLabel="Channel"
+          valueAxisLabel="Share of revenue (%)"
+          formatValue={formatPercent}
+          formatTick={formatPercent}
+          isLoading={channels.isPending || !view.apiParams}
+          error={channels.error}
+          onRetry={() => void channels.refetch()}
+          emptyTitle="No sales in any channel in this period"
+        />
       </div>
-
-      <BarChart
-        title="Channel mix"
-        description={
-          complete
-            ? `Each channel's share of revenue, ${period}, against the ${COMPARISON_LABELS[view.comparison].toLowerCase()}.`
-            : `Each channel's share of revenue, ${period}. ${note}.`
-        }
-        series={[
-          { key: "current", label: "This period" },
-          ...(complete ? [{ key: "baseline", label: COMPARISON_LABELS[view.comparison] }] : []),
-        ]}
-        data={(channels.data?.rows ?? []).map((row) => ({
-          category: CHANNEL_LABELS[row.channel],
-          values: { current: row.share, baseline: row.baseline_share },
-        }))}
-        orientation="horizontal"
-        categoryAxisLabel="Channel"
-        valueAxisLabel="Share of revenue (%)"
-        formatValue={formatPercent}
-        formatTick={formatPercent}
-        isLoading={channels.isPending || !view.apiParams}
-        error={channels.error}
-        onRetry={() => void channels.refetch()}
-        emptyTitle="No sales in any channel in this period"
-      />
     </PageScaffold>
   );
 }

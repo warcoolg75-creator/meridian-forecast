@@ -10,7 +10,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models import CalendarEvent, LineCapability, Plant, ProductionLine
+from app.models import CalendarEvent, LineCapability, Plant, Product, ProductionLine
 from tests.conftest import add_daily, add_order
 
 PERIOD = (date(2025, 3, 3), date(2025, 3, 30))
@@ -136,6 +136,33 @@ def test_partial_edge_buckets(signed_in, data):
         ("2025-03-17", 2, True, 2 * per_day),
     ]
     assert body["points"][0]["baseline_units"] == 5 * sum(c[1][0] for c in CELLS.values())
+
+
+def test_comparison_coverage_per_bucket_follows_history_and_launch(signed_in, data, db, ids):
+    # All products: history starts with the data (4 Mar 2024), so every week compares whole.
+    body = get(signed_in, "timeseries")
+    assert body["baseline_history"] == {"first_date": "2024-03-04", "starts_with": "data"}
+    assert [p["baseline_days_covered"] for p in body["points"]] == [7, 7, 7, 7]
+
+    # Filtered to a product that launched on Wed 20 Mar 2024, inside last year's window:
+    # the weeks compared with days before its launch have no comparison, or a partial one.
+    db.get(Product, ids["product"]["IND-BRG-6205"]).launched_on = date(2024, 3, 20)
+    db.commit()
+    body = get(signed_in, "timeseries", skus="IND-BRG-6205")
+    assert body["baseline_history"] == {"first_date": "2024-03-20", "starts_with": "launch"}
+    assert [(p["period_start"], p["days_covered"], p["baseline_days_covered"]) for p in body["points"]] == [
+        ("2025-03-03", 7, 0),  # 4-10 Mar 2024: before the launch
+        ("2025-03-10", 7, 0),
+        ("2025-03-17", 7, 5),  # 18-24 Mar 2024: from the 20th, 5 of 7 days
+        ("2025-03-24", 7, 7),
+    ]
+    # A product launched before the data starts changes nothing: history starts with the data.
+    body = get(signed_in, "timeseries", skus="FDS-GFB-1KG")
+    assert body["baseline_history"] == {"first_date": "2024-03-04", "starts_with": "data"}
+
+    # The previous period of the first two weeks of data (19 Feb - 3 Mar 2024) lies before it.
+    body = get(signed_in, "timeseries", date_from="2024-03-04", date_to="2024-03-17", comparison="previous_period")
+    assert [p["baseline_days_covered"] for p in body["points"]] == [0, 0]
 
 
 @pytest.mark.parametrize("granularity", ["day", "month"])

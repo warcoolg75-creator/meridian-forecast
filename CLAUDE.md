@@ -294,6 +294,62 @@ group; hairline cream-200 grid; ticks `text-step-n2` with `figure` for numbers a
 fixed 48px cut the rupee sign off "₹2.25Cr". The time series keeps 32px on the right for
 its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
 
+### Up and down (after phase 4)
+
+- **"Up" and "down" always mean against the comparison period** (the same period last
+  year by default), never a line's own week-on-week slope. The data is seasonal: a line
+  coloured by its slope would turn clay after every Diwali, which is the season, not a
+  decline.
+- **Series lines are never recoloured**: series colour is identity. Sage and clay encode
+  only the sign of a difference, and colour is never the only signal: every coloured
+  value also carries a sign (a true minus, U+2212, from `formatSignedPercent`) and an
+  arrow (`SignedChange`, `KpiCard`), and the hidden tables give the signed difference
+  with "(up)" / "(down)".
+- **Sage and clay never sit on or directly beside a maroon series.** Measured
+  2026-10-20 (validator method above; simulated = the worse of protanopia and
+  deuteranopia, tritanopia noted where it is lower):
+
+| Pair | Normal vision ΔE | Worst simulated ΔE | Verdict |
+|---|---|---|---|
+| sage-600 / clay-600 | 15.2 | 6.5 (deutan) | floor: legal only with position + sign + arrow |
+| sage-600 / maroon-500 | 18.2 | **5.6** (deutan) | fail |
+| clay-600 / maroon-500 | **9.0** | 8.6 (deutan; tritan 6.9) | fail: barely distinct even with full colour vision |
+| sage-600 / ink-400 | **13.7** | 10.6 (protan) | fail (normal vision) |
+| clay-600 / ink-400 | 15.8 | 12.8 (deutan) | pass |
+| sage / clay washes over cream-50 at 14%, 18%, 24% | **1.8, 2.4, 3.1** | **0.8, 0.9, 1.3** (deutan) | fail: indistinguishable at any opacity under 100% |
+
+  Contrast on cream-50: sage-600 5.41, clay-600 5.74. The ink-400 comparison line drops
+  below 3:1 on those washes (2.77, 2.63, 2.40).
+- **So there is no shaded gap between a current and a comparison line, and there must
+  not be one.** It was specified, measured (the last row) and dropped: low-opacity sage
+  and clay next to a maroon line cannot work on this palette. Do not try it again with
+  other opacities; the washes are under ΔE 3.1 at every opacity tried.
+- **Clay was not darkened.** Separating clay from sage (normal >= 15, simulated >= 8)
+  needs clay-600 mixed into ink-900 at 60% clay or less (60%: ΔE 15.4 / 10.3 vs sage).
+  At 60%, 55% and 50% the destructive button against the maroon primary falls to
+  simulated ΔE 4.8, 5.1, 5.6 (from 8.6); at 60% negative text comes within ΔE 7.7 of
+  muted ink-600 text (from 12.4) and the destructive hover within ΔE 2.6 of its rest
+  state (from 4.3). Only 45% and 40% clear maroon again (6.3, 7.3), and at 45% negative
+  text is ΔE 14.0 from body text and the hover 2.0. Every WCAG ratio would have improved
+  (error text 5.74 to 8.94, badge text 4.97 to 7.75), so contrast was never the problem:
+  the up/down charts rely on position and sign with clay-600 as it is.
+- **Where the sign is shown:** `DivergingBarChart` (bars about a zero line, sage up,
+  clay down, rounded far ends): the change strip under the dashboard's and a product's
+  time series, its own panel (`ChangeStrip`); and "Growth by product" beside Top
+  products, sorted, `centreZero`, no maroon in it. Position carries the meaning; colour
+  only reinforces it. Plus `SignedChange` on KPI deltas and the products table.
+- **The strip lines up with the chart above it**: both fix their value axis to
+  `ALIGNED_AXIS_WIDTH` (64px), the time series takes `alignToBars` (half a band of
+  padding each side, so its points sit where bars centre) and both share a `syncId`, so
+  hovering one shows the same period in the other. Measured: every bar within 0.23px of
+  its point at 1440, 768 and 360.
+- **A bucket with a missing or partial comparison gets no colour**: a neutral ink ring on
+  the zero line (a change that rounds to 0.0% gets a neutral 2px mark), and the reason
+  in the tooltip and the hidden table. The API gives `baseline_days_covered` per point
+  and `baseline_history` (the data's first day, or the filtered products' launch, so a
+  week before the Air Fryer launched is "no comparison", not "nothing sold"). A product
+  with no comparison is left out of Growth by product, named with its reason under it.
+
 ## App shell and component library (phase 3)
 
 - **Shell** (`components/shell/`): below 768px a top bar whose hamburger opens a

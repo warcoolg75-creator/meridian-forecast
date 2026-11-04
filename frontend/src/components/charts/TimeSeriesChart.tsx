@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   Area,
   CartesianGrid,
@@ -98,9 +98,22 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   actions?: ReactNode;
   /** Under the plot, e.g. a note on festivals that moved between years. */
   footer?: ReactNode;
+  /** A fixed value-axis width instead of one sized to the ticks; needed by `alignToBars`. */
+  yAxisWidth?: number;
+  /**
+   * Centre each point on its period's band, as a bar chart does, so a DivergingBarChart
+   * below with the same `yAxisWidth` puts each bar exactly under its point.
+   */
+  alignToBars?: boolean;
+  /** Recharts' syncId: hovering one chart shows the same period in the other. */
+  syncId?: string;
 }
 
 type Row = Record<string, string | number | null | [number, number]>;
+
+/** Room on the right for the last tick label, centred on the plot's edge: "Oct 2026" is
+ * 50px wide, so 24px clipped it by a pixel. DivergingBarChart uses the same margin. */
+const RIGHT_MARGIN = 32;
 
 /**
  * One or more series over time, with an optional confidence band and an optional
@@ -124,9 +137,18 @@ export function TimeSeriesChart({
   eventLabels = { span: "Promotion", day: "Holiday or festival" },
   actions,
   footer,
+  yAxisWidth,
+  alignToBars = false,
+  syncId,
   ...state
 }: TimeSeriesChartProps) {
   const reducedMotion = usePrefersReducedMotion();
+  const [chartWidth, setChartWidth] = useState(0);
+  // Half a band each side: points then sit where a bar chart centres its bars.
+  const bandPadding =
+    alignToBars && yAxisWidth !== undefined && chartWidth > 0 && data.length > 0
+      ? Math.max(0, (chartWidth - RIGHT_MARGIN - yAxisWidth) / data.length / 2)
+      : 0;
   const hasValues = data.some((point) =>
     series.some((s) => typeof point.values[s.key] === "number"),
   );
@@ -262,14 +284,13 @@ export function TimeSeriesChart({
         />
       }
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" onResize={(width) => setChartWidth(width)}>
         <ComposedChart
           data={rows}
           role="img"
           title={`${title}. The values follow as a table.`}
-          // Room on the right for the last tick label, centred on the plot's edge: "Oct 2026"
-          // is 50px wide, so 24px clipped it by a pixel.
-          margin={{ top: 8, right: 32, bottom: 0, left: 0 }}
+          syncId={syncId}
+          margin={{ top: 8, right: RIGHT_MARGIN, bottom: 0, left: 0 }}
         >
           <CartesianGrid vertical={false} stroke={GRID_COLOR} />
           <XAxis
@@ -280,14 +301,15 @@ export function TimeSeriesChart({
             axisLine={{ stroke: RULE_COLOR }}
             minTickGap={24}
             tickMargin={8}
+            padding={{ left: bandPadding, right: bandPadding }}
           />
           <YAxis
             tickFormatter={formatTick}
             tick={{ className: TICK_CLASS }}
             tickLine={false}
             axisLine={false}
-            // Sized to the widest tick: a fixed 48px clipped the rupee sign off "₹2.25Cr".
-            width="auto"
+            // Sized to the widest tick unless fixed: a fixed 48px clipped the ₹ off "₹2.25Cr".
+            width={yAxisWidth ?? "auto"}
           />
           <Tooltip
             cursor={{ stroke: RULE_COLOR, strokeWidth: 1 }}

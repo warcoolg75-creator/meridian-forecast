@@ -6,6 +6,7 @@
  */
 import type { BarDatum } from "../../components/charts/BarChart";
 import type { Series } from "../../components/charts/chart-theme";
+import type { DivergingDatum } from "../../components/charts/DivergingBarChart";
 import type { TimeSeriesPoint } from "../../components/charts/TimeSeriesChart";
 import type { FilterOption } from "../../components/filters/filters";
 import { addDays, type IsoDate } from "../../lib/dates";
@@ -73,6 +74,47 @@ export const unitsByYear: TimeSeriesPoint[] = Array.from({ length: ACTUAL_WEEKS 
     ]),
   ),
 }));
+
+/** This year and last year only: the chart a change strip sits under. */
+export const twoYearSeries: Series[] = yearSeries.slice(0, 2);
+
+/** Week 9 is made flat (last year = this year), to show the neutral mark. */
+const FLAT_WEEK = 9;
+/** The first two weeks have no comparison, as if last year's history started later. */
+const NO_COMPARISON_WEEKS = 2;
+
+/** unitsByYear with the flat week and the missing comparison weeks applied. */
+export const unitsThisYearAndLast: TimeSeriesPoint[] = unitsByYear.map((point, i) => ({
+  date: point.date,
+  values: {
+    y2026: point.values.y2026,
+    y2025:
+      i < NO_COMPARISON_WEEKS ? null : i === FLAT_WEEK ? point.values.y2026 : point.values.y2025,
+  },
+}));
+
+/** Each week of unitsThisYearAndLast as a change against last year. */
+export const changeByWeek: DivergingDatum[] = unitsThisYearAndLast.map((point) => {
+  const now = point.values.y2026 ?? 0;
+  const before = point.values.y2025;
+  return {
+    key: point.date,
+    label: point.date,
+    heading: point.date,
+    value: typeof before === "number" ? now / before - 1 : null,
+    reason:
+      typeof before === "number"
+        ? undefined
+        : "Fixture: last year's history starts after this week.",
+    details: [
+      { label: "This year", value: now.toLocaleString("en-IN") },
+      {
+        label: "Last year",
+        value: typeof before === "number" ? before.toLocaleString("en-IN") : "None",
+      },
+    ],
+  };
+});
 
 export const REGIONS = ["North", "South", "East", "West", "Central"];
 export const CHANNELS = ["Online", "Retail", "Wholesale"];
@@ -185,3 +227,9 @@ export const channelOptions: FilterOption[] = CHANNELS.map((c) => ({
   value: c.toLowerCase(),
   label: c,
 }));
+
+/** Growth per product against last year, from the largest rise to the largest fall. */
+export const growthByProduct: DivergingDatum[] = topProducts
+  .slice(0, 10)
+  .map((p) => ({ key: p.sku, label: p.name, heading: p.name, value: p.change }))
+  .sort((a, b) => b.value - a.value);

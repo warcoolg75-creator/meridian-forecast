@@ -4,6 +4,7 @@ import { AlertIcon, TrendIcon } from "../brand/icons";
 import { Loading, Skeleton } from "../feedback/Skeleton";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
+import { directionOf } from "./change";
 import { Sparkline } from "./Sparkline";
 
 export interface KpiCardProps {
@@ -35,16 +36,6 @@ export interface KpiCardProps {
   onRetry?: () => void;
   /** Shown when there is no value, e.g. "No sales in this period". */
   emptyMessage?: string;
-}
-
-type Direction = "up" | "down" | "flat";
-
-/** Anything that rounds to 0.0% is flat. */
-const FLAT = 0.0005;
-
-function directionOf(delta: number): Direction {
-  if (Math.abs(delta) < FLAT) return "flat";
-  return delta > 0 ? "up" : "down";
 }
 
 /**
@@ -140,7 +131,7 @@ function Delta({
   const spoken =
     direction === "flat"
       ? `Unchanged ${comparison}`
-      : `${direction === "up" ? "Up" : "Down"} ${shown.replace(/^[+-]/, "")} ${comparison}${judged ? (good ? ", favourable" : ", unfavourable") : ""}`;
+      : `${direction === "up" ? "Up" : "Down"} ${shown.slice(1)} ${comparison}${judged ? (good ? ", favourable" : ", unfavourable") : ""}`;
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-step-n1">
       <span className={cn("inline-flex items-center gap-1 font-medium", tone)}>
