@@ -35,6 +35,7 @@ its reason names, and re-run `make build` and `make lint`.
 | TypeScript | ~6.0 | typescript-eslint (the ESLint TypeScript plugin) supports TypeScript < 6.1. TypeScript 7, or even 6.1, breaks `npm run lint`, and `npm run build` runs lint first. Hence `~6.0`, not `^6`. |
 | Vite | 8 | @vitejs/plugin-react 6 requires Vite 8. @tailwindcss/vite supports Vite up to 8: check its peer range before moving to 9. Vite 8 needs Node ^20.19 or >= 22.12 (`engines`). |
 | Tailwind CSS (+ @tailwindcss/vite) | 4 | The design system is built on Tailwind 4's `@theme`: `tokens.css` is the theme and there is no config file. Tailwind 3 has no `@theme`, so going back means a second, mirrored config. |
+| tailwind-merge | 3 | Behind `cn()`. v3 is the line for Tailwind 4 (v2 was for 3); move it with Tailwind, and check its default theme keys (`color`, `text`, `font`, `radius`, `shadow`, `tracking`) still match what `lib/cn.ts` overrides. No dependencies of its own. |
 
 ## Conventions
 
@@ -200,6 +201,19 @@ its reason names, and re-run `make build` and `make lint`.
   values (`p-[13px]`, `bg-(--x)`) and inline `style` props; the styleguide is the one
   exception for `style`, because it renders tokens discovered at runtime. `npm run build`
   runs check-tokens and ESLint before Vite.
+- **`cn()` merges, it does not just join** (`lib/cn.ts`, tailwind-merge): when two classes
+  set the same property the later one wins, which is how a caller overrides a component's
+  default (LineIcon's `size-6` with `size-4`). Its theme is read from tokens.css at build
+  time (colours, `text-step-*`, fonts and weights, radii, shadows, tracking, and the
+  `h-chart-*` / `max-h-scroll-*` sizes), so a new token in those namespaces needs nothing.
+  A new namespace, or an `@utility` that should merge with a built-in, must be added
+  there. The overrides matter: tailwind-merge's defaults read any word after `text-` as a
+  colour, so `text-step-1 text-fg` would have lost its size. Until 2026-11-04 `cn()` only
+  joined strings and the CSS order decided, so `size-6` beat `size-4` and `size-5`: every
+  icon asking for 16 or 20px drew at 24px, and the products sparklines got `h-10 w-full`
+  instead of their `h-8 w-24`. Audit of the switch: all 217 class-list literals in `src/`
+  merge to themselves (no false conflicts), and over 34 page states the 17 calls whose
+  result changed were all a caller's class overriding a component default.
 - Type: Fraunces for headings (h1-h4 get it by default) and Inter for body text and every
   number. **Every number shown as data uses the `figure` utility** (Inter, tabular lining
   figures, even inside a heading): KPIs, deltas, table cells, axis labels. Tables, inputs,
