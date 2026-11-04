@@ -8,7 +8,7 @@ The project is built in 10 phases. Build only what the current phase asks for.
 Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system, was
 deferred until after it and is closed (2026-10-13). Phase 2, the public brand page and
 authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI component
-library, is built (2026-10-13). Phase 4, sales analytics, is built (2026-10-20). Phase 5
+library, is built (2026-10-13). Phase 4, sales analytics, is closed (2026-11-04). Phase 5
 has not started.
 
 ## Stack
@@ -132,6 +132,17 @@ its reason names, and re-run `make build` and `make lint`.
   pinned dataset takes ~106 MB of the free tier's 500 MB. Last reseeded 2026-10-20 after
   the wipe: 207,981 `daily_sales` rows, `weekly_sales` / `monthly_sales` equal to their
   GROUP BY, `ground_truth.json` byte-identical.
+
+## Deployment
+
+- **In production the API must run in ap-south-1, next to the database.** The hosted
+  PostgreSQL (Supabase, ap-south-1) spends 0.2-46 ms per dashboard call (EXPLAIN ANALYZE,
+  2026-10-20), yet the p95 measured from the dev laptop was 297-1,702 ms: every round
+  trip there costs 35-55 ms, and a request makes 5-9 of them (pool pre-ping, BEGIN, 1-5
+  statements, ROLLBACK). In the same region a round trip is about 1 ms, so a call costs
+  roughly its database time plus a few milliseconds. An API in any other region pays the
+  full round trip on every one of those, and laptop-to-Supabase timings say nothing about
+  production speed.
 
 ## Design rules established in phase 1
 
@@ -485,8 +496,8 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
   BEGIN, 1-5 statements, ROLLBACK, plus the harness's two read-only checks), with Wi-Fi
   spikes in the p95. The database itself spends 0.2-46 ms per call (EXPLAIN ANALYZE,
   planning + execution; the slowest is a 52-week summary). Its answers equal SQLite's for
-  all 24 calls (3,089 values). An API deployed next to the database would see roughly the
-  server time plus a few sub-millisecond round trips.
+  all 24 calls (3,089 values). Hence the rule under Deployment: the API runs in ap-south-1
+  next to the database.
 - **Verification**: `make verify-analytics` compares 1,816 figures over 5 filter
   combinations (incl. a state that must include its cities, a channel, two SKUs against
   the previous period, a city by month) plus the seasonal peaks: each seasonal SKU's peak
