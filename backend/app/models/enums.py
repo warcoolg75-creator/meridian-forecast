@@ -39,3 +39,19 @@ class SalesSource(StrEnum):
 
     ORDERS = "orders"
     IMPORT = "import"
+
+
+class ForecastRunKind(StrEnum):
+    PRODUCTION = "production"  # champions trained on all history: what the app shows
+    BACKTEST = "backtest"  # rolling-origin evaluation: metrics, champions, interval widths
+
+
+class MetricWindow(StrEnum):
+    SELECTION = "selection"  # target weeks before the held-out window; champions are picked here
+    HELD_OUT = "held_out"  # the last 13 complete weeks; never used to pick anything
+    FESTIVE_2025 = "festive_2025"  # selection-window targets in Sep-Nov 2025 (a subset, for the festive view)
+
+
+class ShockScope(StrEnum):
+    INCLUDED = "included"  # every target week
+    EXCLUDED = "excluded"  # weeks with a supply shock (ground truth) left out

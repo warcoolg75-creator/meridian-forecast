@@ -28,7 +28,7 @@ ROLLUP_ARGS ?=
 VERIFY_ARGS ?=
 PYTEST_ARGS ?=
 
-.PHONY: venv migrate seed rollup rollup-periods verify-analytics test test-pg run dev web build lint hooks
+.PHONY: venv migrate seed rollup rollup-periods backtest forecast verify-analytics test test-pg run dev web build lint hooks
 
 venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
@@ -46,6 +46,12 @@ rollup:  ## rebuild daily_sales from order lines (and its weekly/monthly rollups
 
 rollup-periods:  ## rebuild only weekly_sales and monthly_sales from the existing daily_sales
 	cd backend && "$(PYTHON)" -m app.cli rollup-periods $(ROLLUP_ARGS)
+
+backtest:  ## score every model at 13 rolling origins (writes metrics, champions, docs/backtest-report.md)
+	cd backend && "$(PYTHON)" -m app.cli backtest
+
+forecast:  ## train each SKU's champion on all history and write a forecast run (make backtest first)
+	cd backend && "$(PYTHON)" -m app.cli forecast
 
 verify-analytics:  ## recompute every analytics figure in pandas and compare with the running API (make run first)
 	cd backend && "$(PYTHON)" tools/verify_analytics.py $(VERIFY_ARGS)

@@ -29,9 +29,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx2>=2.13"]  # starlette.testclient prefers httpx2 over httpx
-# Phase-5 forecasting stack; versions verified to install and fit on Python 3.14 / Windows
-# in the project venv. Native file I/O must stay on ASCII paths (see CLAUDE.md).
-ml = ["prophet>=1.5", "lightgbm>=4.7", "statsmodels>=0.15", "scikit-learn>=1.9"]
+# Phase-5 forecasting stack, pinned exactly (like numpy and holidays): forecasts are
+# byte-identical only for the same versions, and each run records them. Verified to
+# install and fit on Python 3.14 / Windows in the project venv.
+ml = ["prophet==1.5.0", "cmdstanpy==1.3.0", "lightgbm==4.7.0", "statsmodels==0.15.0", "scikit-learn==1.9.1"]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
