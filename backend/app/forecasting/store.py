@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.forecasting.backtest import BacktestResult
 from app.forecasting.data import SalesHistory
+from app.forecasting.models import VERSION
 from app.models import BacktestMetric, Forecast, ForecastRun, ForecastRunKind, MetricWindow, Product, ShockScope
 
 LIBRARIES = ("prophet", "cmdstanpy", "lightgbm", "statsmodels", "scikit-learn", "numpy", "pandas", "scipy")
@@ -23,11 +24,29 @@ def latest_run(session: Session, kind: ForecastRunKind) -> ForecastRun | None:
     ).first()
 
 
+def run_version(run: ForecastRun) -> str:
+    """Runs made before v2 store no version: they are v1."""
+    return (run.params or {}).get("version", "v1")
+
+
+def latest_of_version(session: Session, kind: ForecastRunKind, version: str,
+                      backtest_run_id: int | None = None) -> ForecastRun | None:
+    """The newest run of a kind and version (for production runs, optionally made from a
+    given backtest run)."""
+    runs = session.scalars(sa.select(ForecastRun).where(ForecastRun.kind == kind).order_by(ForecastRun.id.desc()))
+    for run in runs:
+        if run_version(run) == version and (backtest_run_id is None
+                                            or run.params.get("backtest_run_id") == backtest_run_id):
+            return run
+    return None
+
+
 def save_backtest(session: Session, history: SalesHistory, result: BacktestResult, seed: int,
                   duration: float, warnings: list[str]) -> ForecastRun:
     run = ForecastRun(
         kind=ForecastRunKind.BACKTEST, model="all", data_end_date=history.data_end,
         training_cutoff=history.weeks[-1], params={
+            "version": VERSION,
             "origins": [str(o) for o in result.origins],
             "held_out_start": str(result.held_out_start),
             "champions": result.champions,

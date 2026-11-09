@@ -83,7 +83,8 @@ def _backtest(args: argparse.Namespace) -> int:
 
 def _forecast(args: argparse.Namespace) -> int:
     from app.forecasting.data import load_history
-    from app.forecasting.production import digest, forecast_rows
+    from app.forecasting.models import ENSEMBLE, MODEL_NAMES, VERSION
+    from app.forecasting.production import digest, forecast_rows, model_forecasts
     from app.forecasting.report import write_report
     from app.forecasting.scoring import forward_scores
     from app.forecasting.store import latest_run, save_production
@@ -97,12 +98,10 @@ def _forecast(args: argparse.Namespace) -> int:
             print("No backtest run: run make backtest first (it picks each SKU's champion).", file=sys.stderr)
             return 1
         params = backtest.params
-    rows = forecast_rows(history, params["champions"], params["interval_quantiles"], args.seed)
-    from app.forecasting.models import all_models
-
-    every_model = {m.name: m.forecast(history, seed=args.seed) for m in all_models()}
+    every_model = model_forecasts(history, {*MODEL_NAMES, ENSEMBLE}, args.seed)
+    rows = forecast_rows(history, params["champions"], params["interval_quantiles"], args.seed, every_model)
     run_params = {
-        "backtest_run_id": backtest.id, "champions": params["champions"],
+        "version": VERSION, "backtest_run_id": backtest.id, "champions": params["champions"],
         "short_history_skus": params["short_history_skus"], "digest": digest(rows),
         "assumptions": {"promotions": "none planned after the data end", "supply_shocks": "never forecast"},
         "forward_oracle": forward_scores(history, rows, params["headline_skus"], every_model),

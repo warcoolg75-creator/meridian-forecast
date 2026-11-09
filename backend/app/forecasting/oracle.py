@@ -81,3 +81,16 @@ def shock_weeks() -> set[tuple[str, date]]:
                 weeks.add((sku, day - timedelta(days=day.weekday())))
                 day += timedelta(days=1)
     return weeks
+
+
+def shock_days_by_week() -> dict[tuple[str, date], int]:
+    """(SKU, Monday) -> how many of that week's days are inside the SKU's supply shocks."""
+    counts: dict[tuple[str, date], int] = {}
+    for sku, product in _ground_truth()["products"].items():
+        for shock in product["shocks"]:
+            day, last = date.fromisoformat(shock["start"]), date.fromisoformat(shock["end"])
+            while day <= last:
+                key = (sku, day - timedelta(days=day.weekday()))
+                counts[key] = counts.get(key, 0) + 1
+                day += timedelta(days=1)
+    return counts

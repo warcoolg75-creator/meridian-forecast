@@ -88,3 +88,74 @@ class Calendar:
 
     def festival_dates(self, key: str) -> list[date]:
         return sorted(d for d, k in self.festivals if k == key)
+
+
+MERGE_WITHIN_DAYS = 7
+MOVES_MORE_THAN_DAYS = 7
+YEAR_DAYS = 364  # 52 weeks: the shift the comparison and the year-ago features use
+
+
+def _dates_by_key(festivals: tuple[tuple[date, str], ...]) -> dict[str, list[date]]:
+    out: dict[str, list[date]] = {}
+    for day, key in festivals:
+        if key != OTHER_PUBLIC:  # a catch-all of unrelated holidays, never one festival
+            out.setdefault(key, []).append(day)
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def merged_festivals(festivals: tuple[tuple[date, str], ...], keys: list[str] | tuple[str, ...]) -> list[tuple[str, ...]]:
+    """Groups of `keys` whose dates fall within MERGE_WITHIN_DAYS of each other in every year
+    either occurs in the calendar (singletons for the rest). Such festivals are
+    indistinguishable in weekly data, so a regression gives them huge opposite effects that
+    cancel in the past but not when their dates fall differently against the weeks."""
+    dates = _dates_by_key(festivals)
+
+    def together(a: str, b: str) -> bool:
+        years = {d.year for d in dates.get(a, [])} | {d.year for d in dates.get(b, [])}
+        for year in years:
+            da = [d for d in dates.get(a, []) if d.year == year]
+            db = [d for d in dates.get(b, []) if d.year == year]
+            if not da or not db or min(abs((x - y).days) for x in da for y in db) > MERGE_WITHIN_DAYS:
+                return False
+        return bool(years)
+
+    parent = {k: k for k in keys}
+
+    def root(k: str) -> str:
+        while parent[k] != k:
+            k = parent[k]
+        return k
+
+    for i, a in enumerate(keys):
+        for b in keys[i + 1:]:
+            if a in dates and b in dates and together(a, b):
+                parent[root(b)] = root(a)
+    groups: dict[str, list[str]] = {}
+    for k in keys:
+        groups.setdefault(root(k), []).append(k)
+    return sorted((tuple(sorted(g)) for g in groups.values()), key=lambda g: g[0])
+
+
+def moving_festivals(festivals: tuple[tuple[date, str], ...]) -> list[str]:
+    """Festivals whose date moves by more than MOVES_MORE_THAN_DAYS between consecutive years,
+    once the 52-week shift is allowed for (fixed-date holidays move 1-2 days)."""
+    out = []
+    for key, days in _dates_by_key(festivals).items():
+        moves = [abs((b - a).days - YEAR_DAYS) for a, b in zip(days, days[1:])]
+        if any(m > MOVES_MORE_THAN_DAYS for m in moves):
+            out.append(key)
+    return sorted(out)
+
+
+def festival_offsets(festivals: tuple[tuple[date, str], ...], key: str, weeks: list[date],
+                     reach: int = 42) -> np.ndarray:
+    """Days from each week's middle (Thursday) to the nearest occurrence of `key`: negative
+    before it. NaN when the nearest is more than `reach` days away."""
+    days = np.array([d.toordinal() for d in _dates_by_key(festivals).get(key, [])])
+    mid = np.array([(w + timedelta(days=3)).toordinal() for w in weeks])
+    if days.size == 0:
+        return np.full(len(weeks), np.nan)
+    offsets = mid[:, None] - days[None, :]
+    nearest = offsets[np.arange(len(weeks)), np.argmin(np.abs(offsets), axis=1)].astype(float)
+    nearest[np.abs(nearest) > reach] = np.nan
+    return nearest

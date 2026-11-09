@@ -9,8 +9,10 @@ Phase 1 is closed (2026-10-12). Phase 0, the frontend scaffold and design system
 deferred until after it and is closed (2026-10-13). Phase 2, the public brand page and
 authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI component
 library, is built (2026-10-13). Phase 4, sales analytics, is closed (2026-11-04). Phase 5a,
-the forecasting engine and backtest (backend only), is built (2026-11-08). Phase 5b, the
-forecast page, has not started.
+the forecasting engine and backtest (backend only), is closed (2026-11-09) after v1 and one
+v2 improvement round; its forecasting is frozen (see Known issues). Phase 5b, the forecast
+page, has not started. Phase 10 ends with a sealed final test, planned below under
+Forecasting and not to be built or looked at before then.
 
 ## Stack
 
@@ -53,9 +55,9 @@ its reason names, and re-run `make build` and `make lint`.
 - `make rollup-periods`: rebuild only `weekly_sales` / `monthly_sales` from the existing
   `daily_sales` (it never touches `daily_sales`; `make rollup` rebuilds both).
 - `make backtest`: every model at 13 rolling origins; writes the metrics, each SKU's
-  champion and `docs/backtest-report.md` (68-299 s on the dev laptop, depending on how
-  hard it throttles). `make forecast`: the champions trained on every complete week; writes
-  a forecast run and refreshes the report (25-47 s). Backtest first: forecast refuses
+  champion and `docs/backtest-report.md` (v2: 413 s on the dev laptop; v1 took 68-299 s,
+  depending on how hard it throttles). `make forecast`: the champions trained on every
+  complete week; writes a forecast run and refreshes the report (16-47 s). Backtest first: forecast refuses
   without one. Both need the `ml` extra.
 - `make verify-analytics`: recompute every analytics figure in pandas straight from the
   tables and compare it with the running API (`make run` first). Exit 1 on any mismatch.
@@ -132,8 +134,12 @@ its reason names, and re-run `make build` and `make lint`.
   in different positions; today's SKUs and region codes sort identically.
 - **Free-tier Supabase pauses a project after about a week without activity.** The
   session pooler then refuses every connection with "FATAL: (ENOTFOUND) tenant/user ...
-  not found" (seen 2026-11-08, after the last activity on 2026-10-20). Nothing is lost:
-  the user resumes it from the Supabase dashboard; there is no way to do it from here.
+  not found" (seen 2026-11-08, after the last activity on 2026-10-20). **That message means
+  paused: do not debug the URL, the pooler or `.env`.** Ask the user to restore the project
+  from the Supabase dashboard; there is no way to do it from here. Nothing is lost:
+  restored 2026-11-09 with the same pooler string (`.env` unchanged since 2026-10-11) and
+  every row intact (207,981 `daily_sales` rows, both rollups equal to their GROUP BY, RLS on
+  all 17 tables, read-only check). Migration 0005 was then applied there (20 tables).
 - That database is also the PG fixture's scratch space: `make test-pg` drops and
   recreates the tables, wiping anything `make seed` put there. The full suite takes
   ~7-9 min there. `make seed` against it (`DATABASE_URL` set to it) is network-bound:
@@ -551,6 +557,33 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
   sampling); LightGBM, one global direct multi-horizon model whose sales features are
   anchored at the origin and read through `_before`, which returns NaN for any later week.
   The log-space models return medians: their bias is reported, never silently corrected.
+  `all_models()` returns the v2 configuration (`PROPHET_V2`, `LIGHTGBM_V2` in
+  `models/__init__.py`); the constructors' defaults are v1's, so v1 stays reproducible.
+- **Champion since v2: the mean of Prophet and LightGBM for every SKU** (`ENSEMBLE`,
+  stored as model `prophet_lightgbm`; LightGBM alone for the Air Fryer, which Prophet cannot
+  fit). Chosen over v1's per-SKU pick and over a 10%-margin pick on the internal split; the
+  backtest re-checks that comparison every run (`notes.champion_check`). Being calendar-aware
+  by construction, it also covers "festive SKUs get calendar-aware champions only". Without
+  both parts (the fast test fixtures) the per-SKU pick is the fallback.
+- **v2 settings**, each decided on the selection window only:
+  - Prophet merges festivals that fall within 7 days of each other in **every** year of
+    the calendar into one regressor (`merged_festivals`): on the pinned data Dhanteras +
+    Diwali and Durga Puja + Dussehra. Separately they got large opposite effects that
+    cancelled in the past but not in 2026. Default prior kept; nothing tuned on festive
+    origins.
+  - Prophet leaves out of its fit a week below half its trailing 13-week median **and**
+    below half the same weeks last year (t-53..t-51), trailing alone where there is no last
+    year (`collapsed_weeks`, rule `trailing_and_year_ago_if_known`). The trailing rule alone
+    scored lower WAPE but deleted real seasonal falls (the Air Cooler after summer, the Gift
+    Box after Diwali): audited against ground-truth shock days, 50% precision against 71%.
+    The audit is re-run every backtest (`notes.dip_audit`, scoring only).
+  - LightGBM measures its sales features and target against the 13-week **median** (one
+    shock week cannot drag it down). The parameter is `level_stat`: when it was called
+    `level`, the loop's own `level` (the anchor's log level) shadowed it, and "mean" silently
+    became the median for every SKU after the first. `test_forecast_v2.py` checks every SKU.
+  - LightGBM festival offsets (days from each festival that moves more than a week between
+    years, and the change against the year-ago week): tried for all ten moving festivals,
+    not adopted (pooled selection WAPE 13.1% against 12.6%; better on 2 of 11 SKUs).
 - **Short history is excluded, never fitted badly.** Weeks of data a SKU needs at the
   origin: seasonal naive 53 (and the week a year earlier must exist), ETS and Prophet 104
   (two seasons), LightGBM 13 (its level; seasonality comes from the category). The Air
@@ -572,7 +605,8 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
   **only `oracle.py` reads the ground truth, and only the scoring modules (`backtest.py`,
   `scoring.py`, `report.py`) read `oracle.py`**.
 - **Backtest windows**: 13 origins, every 4 weeks across the last 52 weeks. The selection
-  window (targets before 2026-07-06) picks each SKU's champion on WAPE; the held-out
+  window (targets before 2026-07-06) is where every choice is made (v2: on a split inside
+  it, chosen before 2026-04-06 and judged from then); the held-out
   window (the last 13 complete weeks) gives the headline and is never used to pick a model
   or an interval. Every score is computed with and without shock weeks (from the ground
   truth), against the oracle's floor, and for a festive subset (Sep-Nov 2025 targets,
@@ -587,6 +621,10 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
   is not a fully clean held-out number. Held-out intervals come from selection errors only;
   production from all. The p50 is never moved
   into its interval (so the DB check orders the bounds but does not require it).
+  **Since v2, a SKU with under 52 weeks of data uses the `young` table** (`table_key`):
+  LightGBM's errors on long-history SKUs cut to their last 30 weeks at each origin (half
+  of them at a time, the other half intact), about 2-4x as wide. On the internal split it
+  covered simulated young SKUs at ~79% where the long-history table covered ~55%.
 - **The forward oracle test** (`scoring.py`): the production forecast against expected
   demand with no promotions and no shocks (the generator's own function, its window
   extended into the 182 days its holiday list covers; it refuses beyond). Not comparable
@@ -597,12 +635,52 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
   fit, integer units; the `ml` extra is pinned exactly and each run stores its library
   versions. `make forecast` records a SHA-256 digest of its rows: three runs from two
   separate backtests gave the same `b983b87d...`. `tests/test_forecast_determinism.py`.
-- **Results, backtest run 4** (details: `docs/backtest-report.md`, generated, never edited
-  by hand): held-out skill 46.6% (WAPE 16.8% against 31.5%; target 15%), but that window
-  is off-season; median per-SKU skill 33.6%; oracle floor 1.5%; champions' 80% coverage
-  76.1% pooled (measured after a recalibration the held-out result triggered). Champions: Prophet 5 SKUs, LightGBM 6 (incl. the Air Fryer), ETS 1.
-  Forecast-error XYZ moves the Gift Box from Z to Y (error CV 0.51). See Known issues for
-  what did not work.
+- **Results** (details: `docs/backtest-report.md`, generated, never edited by hand; it
+  keeps v1 beside v2). **The held-out window and the forward oracle test have each been
+  looked at twice** (v1, then v2, once each); v2's changes were prompted by v1's held-out
+  results and v1's Diwali check, so neither v2 figure is a clean out-of-sample result.
+  Never re-score them again to choose anything. v1 = backtest run 4 / forecast run 6
+  (runs store no `version`; v2 runs store `"version": "v2"`); v2 = backtest run 7 /
+  forecast run 8.
+
+  | | v1 | v2 |
+  |---|---|---|
+  | Held-out WAPE (skill vs seasonal naive) | 16.8% (+46.6%) | 13.6% (+56.9%) |
+  | Median per-SKU skill | +33.6% | +50.4% |
+  | Champions' 80% / 95% coverage, held-out | 76.1% / 91.9% | 79.7% / 94.7% |
+  | Forward oracle skill, all headline SKUs | +55.3% | +70.1% |
+  | **Forward oracle skill, festive SKUs** | **+5.5%** | **+53.6%** |
+  | Diwali 2026 check (festive champions in the Diwali weeks) | 4 of 6 | 5 of 6 |
+  | `make backtest` | 290 s | 413 s (the young-SKU simulation adds 26 LightGBM fits) |
+
+  Oracle floor 1.5% held-out. Forecast-error XYZ moves the Gift Box from Z to Y (error CV
+  0.61), and four Y SKUs to X. v2 digest `0f1c879b...`. See Known issues for what is
+  still open.
+
+### Plan for phase 10, not now: a sealed final test
+
+Phase 5a's held-out window and forward oracle test have each been seen twice, so neither
+can give a clean result again. The project's final, honest number comes from data no one
+has seen, scored once:
+
+- **Generate demand for the 52 weeks after 2026-10-08** (2026-10-09 to 2027-10-07) with
+  the same generator and seed, **without changing any pinned history or a single byte of
+  `ground_truth.json`** (it must still hash to B93DCEE4..., and
+  `test_committed_ground_truth_matches_the_pinned_generator` must still pass). Keep the
+  sealed weeks out of the app's database and out of anything a model trains on; like
+  `oracle.py`, only the final scoring code may read them.
+- **If extending the generator would change the pinned history, say so at that point and
+  stop for a decision**; never regenerate the pinned dataset to make room. Things to check
+  then: whether the RNG streams (`(seed, stream, product_index)`) draw day by day so that a
+  longer window shifts the earlier draws, and that the ground truth's holiday list covers
+  only 182 days past the data end, while 52 weeks need about a year.
+- **Score the final model on it exactly once, at the end of the project**: the same
+  metrics as the backtest (WAPE, skill against seasonal naive, median per-SKU skill, 80% /
+  95% coverage, the festive SKUs on their own line, and the Diwali 2026 peak check, this
+  time against generated sales rather than expected demand; Diwali 2027 falls after the
+  sealed year), reported beside phase 5a's figures. Nothing is changed after seeing it.
+- **Do not generate it or look at it before phase 10.** Until then it does not exist, so
+  nothing can be tuned against it.
 
 ## Authentication rules established in phase 2
 
@@ -644,20 +722,30 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
 
 ## Known issues
 
-- **Phase 5a, open** (decisions for the user; none was fixed on the held-out window, which
-  would have spoiled its headline):
-  - Per-SKU champion picking overfits: Prophet alone scores 14.3% held-out WAPE, the
-    per-SKU champions 16.8%. Several LightGBM picks won the selection window by small margins.
-  - A supply shock in the last training week is carried forward: WAPE at h 1-4 after a
-    shock week is 34% for LightGBM (15% otherwise) and 27% for Prophet (19%); ETS is not
-    hurt. A shock-robust level (a 13-week median) is the change to test.
-  - LightGBM's 80% intervals cover 71.5% held-out where it is champion (outside 75-85%),
-    pulled down by the Air Fryer (40%): a new product's errors are wider than the pooled
-    errors of the long-history SKUs.
-  - Diwali 2026: 4 of 6 festive champions peak in the right weeks. The Namkeen (Prophet,
-    and LightGBM too) peaks in w/c 2026-10-12; the Induction Cooktop's champion is ETS,
-    which has no calendar and peaks in December (Prophet would place it).
-  - Migration 0005 is not yet on Supabase: the project was paused (see Environment notes).
+- **Phase 5a is closed with three open items, recorded and deliberately unfixed.** Both
+  evaluation windows (the held-out 13 weeks and the forward oracle test) have been seen
+  twice, once per version; every further change chosen while looking at them would fit
+  them. **Do not iterate on the forecasting against them again.** The only clean test left
+  is phase 10's sealed one (below). Numbers from backtest run 7 / forecast run 8:
+  - **Sweets (FDS-SWT-500) peaks three weeks before Diwali 2026.** The champion (the
+    Prophet + LightGBM mean) peaks in w/c 2026-10-12; expected demand peaks in w/c
+    2026-10-26, inside the Diwali weeks (10-26, 11-02). Its LightGBM half peaks on
+    10-12, its Prophet half on 11-02. So the Diwali check is 5 of 6 festive champions, and
+    that acceptance criterion is not met.
+  - **LightGBM carries a supply shock forward.** WAPE at horizons 1-4 when the week before
+    the origin was a shock week: 31.9%, against 14.4% at every other origin (v1: 34.4%
+    against 15.4%), over 80 forecast-weeks. The 13-week median level barely helped: its
+    last-weeks lag features still see the shock. The ensemble dilutes it (18.2% against
+    12.7%); Prophet's dip rule fixed Prophet's (26.7% to 9.1%).
+  - **The Air Fryer's (KIT-AFR-45) 80% intervals cover 62.0% of held-out weeks** (target
+    75-85%; 50 forecast-weeks), with the young-SKU table. v1 covered 40.0%. The champions
+    pooled are inside the band (78.7%), so the per-champion criterion is met while this
+    one SKU is not.
+  v1's four open items, for the record: per-SKU champion overfitting (gone with the
+  ensemble), Prophet's shock carry-over (fixed), LightGBM's interval coverage as champion
+  (71.5%; the champion is now the ensemble), and Diwali 4 of 6 (now 5 of 6).
+- Migration 0005 is on Supabase since 2026-11-09 (Alembic 0005, 20 tables, RLS on all,
+  the three forecast tables empty). No forecasts are to be written there.
 
 - **Resolved in phase 4: `/sales/daily` deep pagination.** OFFSET paging re-ran the
   count and the whole GROUP BY for every page. Measured 2026-10-17 on the day-level sku x

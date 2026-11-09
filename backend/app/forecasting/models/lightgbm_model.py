@@ -21,7 +21,7 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 
-from app.forecasting.calendar import FEATURE_NAMES
+from app.forecasting.calendar import FEATURE_NAMES, festival_offsets, moving_festivals
 from app.forecasting.data import SalesHistory
 from app.forecasting.models.base import HORIZON, SEASON, Forecaster, to_units
 
@@ -35,6 +35,16 @@ FEATURES = (
     *(f"f_{n}" for n in FEATURE_NAMES), *(f"fya_{n}" for n in FEATURE_NAMES),
 )
 CATEGORICAL = ("sku_code", "category_code")
+
+
+def feature_names(history: SalesHistory, offsets: bool) -> list[str]:
+    """FEATURES, plus two per festival that moves by more than a week between years: the
+    target week's days from it, and how much that differs from the year-ago week's days
+    from last year's occurrence (a Diwali 19 days later than last year shows as -19)."""
+    if not offsets:
+        return list(FEATURES)
+    moving = moving_festivals(history.calendar.festivals)
+    return [*FEATURES, *(f"{kind}_{key}" for key in moving for kind in ("days_to", "moved"))]
 
 PARAMS = {
     "objective": "l2", "learning_rate": 0.05, "num_leaves": 31, "min_data_in_leaf": 40,
@@ -52,7 +62,8 @@ def _before(values: np.ndarray, index: np.ndarray, anchor: int) -> np.ndarray:
     return out
 
 
-def build_rows(history: SalesHistory, horizon: int, train: bool) -> tuple[np.ndarray, np.ndarray, list[str]]:
+def build_rows(history: SalesHistory, horizon: int, train: bool, level_stat: str = "mean",
+               offsets: bool = False) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Feature rows. train=True: every anchor whose target is inside the history, with
     targets; train=False: the last week as anchor, h = 1..horizon, for each SKU with
     LEVEL_WEEKS of data. Returns (X, y or empty, the SKU of each row)."""
@@ -63,6 +74,9 @@ def build_rows(history: SalesHistory, horizon: int, train: bool) -> tuple[np.nda
     calendar_row = {w: i for i, w in enumerate(calendar_weeks)}
     festivals = history.calendar.festival_matrix(calendar_weeks)
     categories = sorted({s.category for s in history.skus})
+    # Calendar-only (known in advance): days from each moving festival, for every week.
+    moving = moving_festivals(history.calendar.festivals) if offsets else []
+    days_to = np.column_stack([festival_offsets(history.calendar.festivals, k, calendar_weeks) for k in moving])         if moving else np.empty((len(calendar_weeks), 0))
 
     X_parts, y_parts, row_skus = [], [], []
     for sku in history.skus:
@@ -73,7 +87,10 @@ def build_rows(history: SalesHistory, horizon: int, train: bool) -> tuple[np.nda
         log_units = np.log1p(units)
         series = pd.Series(units)
         mean = {w: series.rolling(w, min_periods=w).mean().to_numpy() for w in (4, LEVEL_WEEKS, 26, 52)}
-        log_mean13 = np.log1p(mean[LEVEL_WEEKS])
+        # The level every sales feature and the target are measured against: the 13-week mean,
+        # or the median, which one shock week cannot drag down.
+        typical = mean[LEVEL_WEEKS] if level_stat == "mean" else series.rolling(LEVEL_WEEKS, min_periods=LEVEL_WEEKS).median().to_numpy()
+        log_mean13 = np.log1p(typical)
         max13 = series.rolling(13, min_periods=13).max().to_numpy()
         promo = history.calendar.promo_days(sku.sku, calendar_weeks)
 
@@ -109,11 +126,13 @@ def build_rows(history: SalesHistory, horizon: int, train: bool) -> tuple[np.nda
                 np.sin(2 * np.pi * day_of_year / 365.25), np.cos(2 * np.pi * day_of_year / 365.25),
                 promo[target_rows], promo[ya_rows],
             ]
-            X_parts.append(np.column_stack([*columns, festivals[target_rows], festivals[ya_rows]]))
+            moved = days_to[target_rows] - days_to[ya_rows]
+            extra = np.column_stack([v for k in range(len(moving)) for v in (days_to[target_rows, k], moved[:, k])])                 if moving else np.empty((h.size, 0))
+            X_parts.append(np.column_stack([*columns, festivals[target_rows], festivals[ya_rows], extra]))
             if train:
                 y_parts.append(log_units[t + h] - level)
             row_skus.extend([sku.sku] * h.size)
-    X = np.vstack(X_parts) if X_parts else np.empty((0, len(FEATURES)))
+    X = np.vstack(X_parts) if X_parts else np.empty((0, len(FEATURES) + 2 * len(moving)))
     y = np.concatenate(y_parts) if y_parts else np.empty(0)
     return X, y, row_skus
 
@@ -126,13 +145,19 @@ class LightGBMGlobal(Forecaster):
     name = "lightgbm"
     min_weeks = LEVEL_WEEKS
 
+    def __init__(self, level: str = "mean", offsets: bool = False) -> None:
+        if level not in ("mean", "median"):
+            raise ValueError(f"level must be mean or median, not {level!r}")
+        self.level = level
+        self.offsets = offsets
+
     def forecast(self, history: SalesHistory, horizon: int = HORIZON, seed: int = 42) -> dict[str, np.ndarray]:
-        X, y, _ = build_rows(history, horizon, train=True)
+        X, y, _ = build_rows(history, horizon, train=True, level_stat=self.level, offsets=self.offsets)
         keep = ~np.isnan(y)
-        data = lgb.Dataset(X[keep], y[keep], feature_name=list(FEATURES), categorical_feature=list(CATEGORICAL),
-                           free_raw_data=False)
+        data = lgb.Dataset(X[keep], y[keep], feature_name=feature_names(history, self.offsets),
+                           categorical_feature=list(CATEGORICAL), free_raw_data=False)
         booster = lgb.train({**PARAMS, "seed": seed}, data, num_boost_round=ROUNDS)
-        X_next, _, skus = build_rows(history, horizon, train=False)
+        X_next, _, skus = build_rows(history, horizon, train=False, level_stat=self.level, offsets=self.offsets)
         predicted = booster.predict(X_next)
         level = X_next[:, FEATURES.index("log_level")]
         values = to_units(predicted + level)

@@ -22,6 +22,10 @@ import pandas as pd
 
 GROUPS = ((1, 4), (5, 13), (14, 26))
 QUANTILES = (0.025, 0.10, 0.90, 0.975)
+# SKUs with fewer weeks of data than this get the "young" table: errors of long-history SKUs
+# forecast as if they were young (a simulation in the backtest), about twice as wide.
+SHORT_HISTORY_WEEKS = 52
+YOUNG = "young"
 
 
 def group_of(horizon: int) -> str:
@@ -45,6 +49,11 @@ def fit_quantiles(pairs: pd.DataFrame) -> dict[str, dict[str, list[float]]]:
         quantiles = np.quantile(rows["error"].to_numpy(), QUANTILES)
         table.setdefault(str(model), {})[str(group)] = [round(float(q), 6) for q in quantiles]
     return table
+
+
+def table_key(table: dict, model: str, weeks_of_data: int) -> str:
+    """The young table for a short-history SKU (when the backtest made one), else the model's."""
+    return YOUNG if weeks_of_data < SHORT_HISTORY_WEEKS and YOUNG in table else model
 
 
 def bounds(table: dict, model: str, horizons: np.ndarray, p50: np.ndarray) -> np.ndarray:

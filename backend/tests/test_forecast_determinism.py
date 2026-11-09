@@ -1,20 +1,23 @@
 """Same seed, same data, same library versions: byte-identical forecasts."""
 
-from app.forecasting.intervals import fit_quantiles
+from app.forecasting.intervals import YOUNG, fit_quantiles
 from app.forecasting.production import digest, forecast_rows
-from app.forecasting.models import all_models
+from app.forecasting.models import ENSEMBLE, all_models
 from tests.forecast_fixture import history
 
 import numpy as np
 import pandas as pd
 
-# Each of the four models is the champion for something, so each is exercised.
-CHAMPIONS = {"FX-FOOD": "prophet", "FX-FAN": "ets", "FX-NEW": "lightgbm"}
+# The v2 champion (Prophet + LightGBM mean: FX-NEW, too young for Prophet, gets LightGBM
+# alone and the young interval table) beside a v1-style single-model champion, so Prophet,
+# LightGBM and ETS are all exercised.
+CHAMPIONS = {"FX-FOOD": ENSEMBLE, "FX-FAN": "ets", "FX-NEW": ENSEMBLE}
 
 
 def _quantiles() -> dict:
-    rows = [{"model": m, "horizon": h, "actual": 100.0 + k, "p50": 100.0}
-            for m in ("seasonal_naive", "ets", "prophet", "lightgbm") for h in range(1, 27) for k in range(-10, 11)]
+    rows = [{"model": m, "horizon": h, "actual": 100.0 + k * (3 if m == YOUNG else 1), "p50": 100.0}
+            for m in ("seasonal_naive", "ets", "prophet", "lightgbm", ENSEMBLE, YOUNG)
+            for h in range(1, 27) for k in range(-10, 11)]
     return fit_quantiles(pd.DataFrame(rows))
 
 
@@ -24,7 +27,7 @@ def test_the_production_forecast_is_byte_identical_across_runs():
     second = forecast_rows(h, CHAMPIONS, quantiles, seed=42)
     assert first == second
     assert digest(first) == digest(second)
-    assert {r["model"] for r in first} == {"prophet", "ets", "lightgbm"}
+    assert {r["model"] for r in first} == {ENSEMBLE, "ets"}
     assert len(first) == 3 * 26
 
 
