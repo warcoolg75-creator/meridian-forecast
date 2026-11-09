@@ -51,7 +51,9 @@ def upgrade() -> None:
     sa.Column('coverage_80', sa.Float(), nullable=True),
     sa.Column('coverage_95', sa.Float(), nullable=True),
     sa.CheckConstraint("shocks IN ('included', 'excluded')", name=op.f('ck_backtest_metrics_shock_scope')),
-    sa.CheckConstraint("window IN ('selection', 'held_out', 'festive_2025')", name=op.f('ck_backtest_metrics_metric_window')),
+    # "window" is a reserved word in PostgreSQL: quoted, or this CHECK is a syntax error there
+    # (autogenerate rendered it bare; SQLite accepted it). tests/test_migration_identifiers.py.
+    sa.CheckConstraint('"window" IN (\'selection\', \'held_out\', \'festive_2025\')', name=op.f('ck_backtest_metrics_metric_window')),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('fk_backtest_metrics_product_id_products')),
     sa.ForeignKeyConstraint(['run_id'], ['forecast_runs.id'], name=op.f('fk_backtest_metrics_run_id_forecast_runs'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_backtest_metrics'))
