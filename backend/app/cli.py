@@ -5,6 +5,7 @@
     python -m app.cli rollup-periods [--date-from YYYY-MM-DD] [--date-to YYYY-MM-DD]
     python -m app.cli backtest [--seed 42]   score every model at 13 rolling origins; report
     python -m app.cli forecast [--seed 42]   train the champions on all history; write a run
+    python -m app.cli backtest-forecasts      store the latest backtest's held-out champion forecasts (h 1-4)
 """
 
 import argparse
@@ -115,6 +116,33 @@ def _forecast(args: argparse.Namespace) -> int:
     return 0
 
 
+def _backtest_forecasts(args: argparse.Namespace) -> int:
+    from app.forecasting.data import load_history
+    from app.forecasting.past_forecasts import recompute, save
+    from app.forecasting.store import latest_run
+    from app.models import ForecastRunKind
+
+    started = time.perf_counter()
+    with get_sessionmaker()() as session:
+        history = load_history(session)
+        run = latest_run(session, ForecastRunKind.BACKTEST)
+        if run is None:
+            print("No backtest run: run make backtest first.", file=sys.stderr)
+            return 1
+        rows, mismatches, checked = recompute(session, history, run, args.seed, progress=print)
+    if mismatches:
+        print(f"Refusing to write: {len(mismatches)} of {checked} stored scores of backtest run {run.id} "
+              "were not reproduced exactly:", file=sys.stderr)
+        for m in mismatches[:20]:
+            print(f"  {m}", file=sys.stderr)
+        return 1
+    with get_sessionmaker()() as session, session.begin():
+        written = save(session, run.id, rows)
+    print(f"backtest run {run.id}: all {checked} per-SKU held-out champion scores at h1 and h4 reproduced exactly; "
+          f"wrote {written} held-out forecast-weeks (h 1-4); {time.perf_counter() - started:.0f}s")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -146,6 +174,13 @@ def main(argv: list[str] | None = None) -> int:
     forecast = commands.add_parser("forecast", help="Train each SKU's champion on all history; write a run")
     forecast.add_argument("--seed", type=int, default=DEFAULT_SEED)
     forecast.set_defaults(handler=_forecast)
+
+    past = commands.add_parser(
+        "backtest-forecasts",
+        help="Recompute the latest backtest and store its held-out champion forecasts (h 1-4), only if it "
+             "reproduces the stored scores exactly")
+    past.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    past.set_defaults(handler=_backtest_forecasts)
 
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):  # a cp1252 console must not crash on a non-ASCII name

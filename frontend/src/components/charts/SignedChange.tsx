@@ -15,7 +15,8 @@ export function SignedChange({ value, className }: { value: number; className?: 
     // Baseline-aligned with the icon centred, so the figure sets the box's baseline and sits
     // level with the numbers beside it (an svg has no baseline of its own).
     <span className={cn("inline-flex items-baseline gap-1 font-medium", tone, className)}>
-      <TrendIcon direction={direction} className="size-4 shrink-0 self-center" />
+      {/* 20px: at 16px the glyph (about 7px) read smaller than the 16px figures beside it. */}
+      <TrendIcon direction={direction} className="size-5 shrink-0 self-center" />
       <span className="figure">{formatSignedPercent(direction === "flat" ? 0 : value)}</span>
       <span className="sr-only">{direction === "flat" ? "unchanged" : direction}</span>
     </span>

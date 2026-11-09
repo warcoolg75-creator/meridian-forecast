@@ -19,3 +19,6 @@ backend/*.db-wal
 # Frontend
 node_modules/
 frontend/dist/
+
+# Screenshots for review (phase 5b on); README images are picked by hand later.
+docs/screenshots/

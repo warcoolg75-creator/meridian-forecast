@@ -39,6 +39,7 @@ import {
   partialNote,
   X_AXIS_LABEL,
 } from "./analytics/present";
+import { DEMAND_VARIABILITY_TIP } from "./forecast/Forecastability";
 import { useAnalyticsView } from "./useAnalyticsView";
 
 const EVENT_TYPE: Record<ProductEvent["event_type"], string> = {
@@ -158,7 +159,10 @@ export default function ProductDetail() {
       actions={
         <>
           {row?.abc && (
-            <Badge>{`Class ${row.abc}${row.xyz ?? ""}${row.xyz ? "" : " (variability not yet classifiable)"}`}</Badge>
+            <span title={DEMAND_VARIABILITY_TIP}>
+              <Badge>{`Class ${row.abc}${row.xyz ?? ""}${row.xyz ? "" : " (demand variability not yet classifiable)"}`}</Badge>
+              <span className="sr-only">{` ${DEMAND_VARIABILITY_TIP}`}</span>
+            </span>
           )}
           <ComparisonToggle value={view.comparison} onChange={view.setComparison} />
         </>

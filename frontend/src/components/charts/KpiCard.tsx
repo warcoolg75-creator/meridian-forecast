@@ -135,7 +135,7 @@ function Delta({
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-step-n1">
       <span className={cn("inline-flex items-center gap-1 font-medium", tone)}>
-        <TrendIcon direction={direction} className="size-4" />
+        <TrendIcon direction={direction} className="size-5" />
         <span aria-hidden className="figure">
           {shown}
         </span>

@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -8,7 +9,9 @@ from app.db import get_db
 from app.models import ForecastRunKind, MetricWindow, ShockScope
 from app.schemas import ErrorResponse
 from app.schemas.forecasting import LeaderboardResponse, MetricsResponse
+from app.config import REPO_ROOT
 from app.services import forecast_read
+from app.services.errors import NotFoundError
 
 router = APIRouter(
     prefix="/backtest",
@@ -45,3 +48,18 @@ def leaderboard(
     return LeaderboardResponse(run=forecast_read.run_info(run), window=window, shocks=shocks,
                                target_skill=forecast_read.TARGET_SKILL,
                                headline_skus=run.params.get("headline_skus", []), models=models, champions=champions)
+
+
+# The one file /report serves (app.forecasting.report writes it; not imported: it needs the ml extra).
+REPORT_PATH = REPO_ROOT / "docs" / "backtest-report.md"
+
+
+@router.get("/report", summary="docs/backtest-report.md", response_class=Response,
+            responses={200: {"content": {"text/markdown": {}}, "description": "The generated backtest report"}})
+def report() -> Response:
+    """The one generated report, docs/backtest-report.md, as written by make backtest and
+    make forecast. A fixed file: there is no path parameter. A file download, so not a
+    Pydantic model (documented exception)."""
+    if not REPORT_PATH.is_file():
+        raise NotFoundError("No backtest report yet: run make backtest")
+    return Response(REPORT_PATH.read_text(encoding="utf-8"), media_type="text/markdown; charset=utf-8")

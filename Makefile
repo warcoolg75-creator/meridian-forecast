@@ -28,7 +28,7 @@ ROLLUP_ARGS ?=
 VERIFY_ARGS ?=
 PYTEST_ARGS ?=
 
-.PHONY: venv migrate seed rollup rollup-periods backtest forecast verify-analytics test test-pg run dev web build lint hooks
+.PHONY: venv migrate seed rollup rollup-periods backtest forecast backtest-forecasts verify-analytics verify-forecast test test-pg run dev web build lint hooks
 
 venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
@@ -53,8 +53,14 @@ backtest:  ## score every model at 13 rolling origins (writes metrics, champions
 forecast:  ## train each SKU's champion on all history and write a forecast run (make backtest first)
 	cd backend && "$(PYTHON)" -m app.cli forecast
 
+backtest-forecasts:  ## recompute the latest backtest; store its held-out champion forecasts (h 1-4) only if its scores match exactly
+	cd backend && "$(PYTHON)" -m app.cli backtest-forecasts
+
 verify-analytics:  ## recompute every analytics figure in pandas and compare with the running API (make run first)
 	cd backend && "$(PYTHON)" tools/verify_analytics.py $(VERIFY_ARGS)
+
+verify-forecast:  ## recompute every forecast-page figure from the tables and compare with the running API (make run first)
+	cd backend && "$(PYTHON)" tools/verify_forecast.py $(VERIFY_ARGS)
 
 test:  ## run pytest on SQLite (always: PostgreSQL is opt-in, see test-pg)
 	cd backend && "$(PYTHON)" -m pytest $(PYTEST_ARGS)

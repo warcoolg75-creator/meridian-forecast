@@ -80,3 +80,36 @@ class BacktestMetric(Base):
     mase: Mapped[float | None] = mapped_column(sa.Float)
     coverage_80: Mapped[float | None] = mapped_column(sa.Float)
     coverage_95: Mapped[float | None] = mapped_column(sa.Float)
+
+
+class BacktestForecast(Base):
+    """A held-out forecast-week of a backtest run's champion, horizons 1-4: what the
+    forecast page plots as "how past forecasts did".
+
+    Recomputed after the fact by `make backtest-forecasts` (the backtest itself stored only
+    scores), and written only when the recomputation reproduces the run's stored per-SKU
+    held-out champion scores at horizons 1 and 4 exactly. Floats, not integers: these are the
+    raw p50 and bounds the backtest scored, so the scores can be recomputed from them
+    bit for bit. `model` is the model behind the champion for that SKU.
+    """
+
+    __tablename__ = "backtest_forecasts"
+    __table_args__ = (
+        sa.UniqueConstraint("run_id", "product_id", "origin", "horizon", name="uq_backtest_forecasts_key"),
+        sa.Index("ix_backtest_forecasts_product_run", "product_id", "run_id"),
+        sa.CheckConstraint("horizon BETWEEN 1 AND 26", name="horizon_range"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(sa.ForeignKey("forecast_runs.id", ondelete="CASCADE"))
+    product_id: Mapped[int] = mapped_column(sa.ForeignKey("products.id"))
+    origin: Mapped[date] = mapped_column(sa.Date)  # Monday of the first forecast week
+    horizon: Mapped[int] = mapped_column(sa.SmallInteger)
+    week: Mapped[date] = mapped_column(sa.Date)  # Monday of the target week
+    model: Mapped[str] = mapped_column(sa.String(40))
+    actual: Mapped[int] = mapped_column(sa.Integer)
+    p50: Mapped[float] = mapped_column(sa.Float)
+    lo80: Mapped[float] = mapped_column(sa.Float)
+    hi80: Mapped[float] = mapped_column(sa.Float)
+    lo95: Mapped[float] = mapped_column(sa.Float)
+    hi95: Mapped[float] = mapped_column(sa.Float)

@@ -5,7 +5,9 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { PLANNING_ROLES } from "./auth/roles";
 import { AppLayout } from "./components/shell/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
-import Forecast from "./pages/app/Forecast";
+import Evidence from "./pages/app/forecast/Evidence";
+import ForecastOverview from "./pages/app/forecast/ForecastOverview";
+import SkuForecastPage from "./pages/app/forecast/SkuForecastPage";
 import Planning from "./pages/app/Planning";
 import { ProductCrumb } from "./pages/app/ProductCrumb";
 import ProductDetail from "./pages/app/ProductDetail";
@@ -53,7 +55,22 @@ export const router = createBrowserRouter([
               },
             ],
           },
-          { path: "forecast", element: <Forecast />, handle: { crumb: "Forecast" } },
+          {
+            path: "forecast",
+            handle: { crumb: "Forecast" },
+            children: [
+              { index: true, element: <ForecastOverview /> },
+              // A fixed segment outranks :sku in React Router, so "evidence" is never a SKU.
+              { path: "evidence", element: <Evidence />, handle: { crumb: "Model evidence" } },
+              {
+                path: ":sku",
+                element: <SkuForecastPage />,
+                handle: {
+                  crumb: (match: UIMatch) => <ProductCrumb sku={match.params.sku ?? ""} />,
+                },
+              },
+            ],
+          },
           {
             // Production planning changes the plan: admins and planners only, as on the API.
             element: <RequireAuth roles={PLANNING_ROLES} />,

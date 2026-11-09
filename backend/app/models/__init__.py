@@ -12,12 +12,13 @@ from app.models.enums import (
     UserRole,
 )
 from app.models.events import CalendarEvent
-from app.models.forecasting import BacktestMetric, Forecast, ForecastRun
+from app.models.forecasting import BacktestForecast, BacktestMetric, Forecast, ForecastRun
 from app.models.geography import Region
 from app.models.manufacturing import Inventory, LineCapability, Plant, ProductionLine, ProductionRun
 from app.models.sales import Customer, DailySales, MonthlySales, SalesOrder, SalesOrderLine, WeeklySales
 
 __all__ = [
+    "BacktestForecast",
     "BacktestMetric",
     "Base",
     "CalendarEvent",

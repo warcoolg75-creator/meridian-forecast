@@ -15,6 +15,7 @@ import { Badge } from "../../components/ui/Badge";
 import { formatDate, formatRange } from "../../lib/dates";
 import { formatInteger, formatPercent, formatRupees } from "../../lib/format";
 import { ComparisonToggle, ViewFilters } from "./analytics/Controls";
+import { DEMAND_VARIABILITY_TIP } from "./forecast/Forecastability";
 import { COMPARISON_PHRASE } from "./analytics/present";
 import { useAnalyticsView } from "./useAnalyticsView";
 
@@ -47,8 +48,8 @@ function classBadge(row: ProductRow) {
   const xyz = row.xyz ?? "–";
   const title =
     row.xyz === null
-      ? `${row.abc}: by revenue share. Variability: not yet classifiable (${row.xyz_weeks} weeks of sales)`
-      : `${row.abc}: by revenue share. ${row.xyz}: weekly volume CV ${row.xyz_cv?.toFixed(2)} over ${row.xyz_weeks} weeks`;
+      ? `${row.abc}: by revenue share. Demand variability: not yet classifiable (${row.xyz_weeks} weeks of sales). ${DEMAND_VARIABILITY_TIP}`
+      : `${row.abc}: by revenue share. Demand variability ${row.xyz}: weekly volume CV ${row.xyz_cv?.toFixed(2)} over ${row.xyz_weeks} weeks. ${DEMAND_VARIABILITY_TIP}`;
   return (
     <span title={title}>
       <Badge>{`${row.abc}${xyz}`}</Badge>
@@ -186,14 +187,15 @@ export default function Products() {
           {formatPercent(
             products.data.classification.abc_b_share - products.data.classification.abc_a_share,
           )}
-          , C the rest. X, Y, Z by how much weekly volume varies (coefficient of variation) over the
-          52 full weeks
+          , C the rest. X, Y, Z are <span className="font-medium text-fg">demand variability</span>:
+          how much weekly volume varies (coefficient of variation) over the 52 full weeks
           {xyzWindow
             ? ` from ${formatDate(xyzWindow.date_from)} to ${formatDate(xyzWindow.date_to)}`
             : ""}
           : X under {products.data.classification.xyz_x_below}, Y up to{" "}
           {products.data.classification.xyz_y_up_to}, Z above. It measures volume variability, not
-          predictability: a regular festival peak still reads as Z.
+          predictability: a regular festival peak still reads as Z. The forecast pages show
+          forecastability instead, from the forecast’s own errors.
         </p>
       )}
     </PageScaffold>

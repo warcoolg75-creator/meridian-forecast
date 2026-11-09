@@ -169,9 +169,28 @@ def test_production_ensemble_and_young_intervals():
     quantiles = {ENSEMBLE: {g: narrow for g in ("1-4", "5-13", "14-26")},
                  intervals.YOUNG: {g: wide for g in ("1-4", "5-13", "14-26")}}
     rows = forecast_rows(h, {"FX-FOOD": ENSEMBLE, "FX-NEW": ENSEMBLE}, quantiles, 42,
-                         by_model={ENSEMBLE: out})
+                         by_model={**parts, ENSEMBLE: out})
     first = {r["sku"]: r for r in rows if r["horizon"] == 1}
     assert first["FX-FOOD"]["p50"] == 120
     # FX-NEW has 20 weeks of data: the young table's wider interval.
     assert first["FX-NEW"]["hi80"] == int(np.rint(31 * np.exp(0.5) - 1))
     assert first["FX-FOOD"]["hi80"] == int(np.rint(121 * np.exp(0.05) - 1))
+
+
+def test_a_short_history_sku_stores_the_model_actually_used():
+    """FX-NEW (20 weeks, short history) has a LightGBM forecast only: its rows say lightgbm,
+    not the ensemble, while its values and young-table interval are unchanged."""
+    h = history()
+    parts = {"prophet": {"FX-FOOD": np.full(26, 100.0)},
+             "lightgbm": {"FX-FOOD": np.full(26, 140.0), "FX-NEW": np.full(26, 30.0)}}
+    wide = [-0.8, -0.5, 0.5, 0.8]
+    quantiles = {ENSEMBLE: {g: [-0.1, -0.05, 0.05, 0.1] for g in ("1-4", "5-13", "14-26")},
+                 intervals.YOUNG: {g: wide for g in ("1-4", "5-13", "14-26")}}
+    rows = forecast_rows(h, {"FX-FOOD": ENSEMBLE, "FX-NEW": ENSEMBLE}, quantiles, 42,
+                         by_model={**parts, ENSEMBLE: ensemble(parts)})
+    models = {r["sku"]: {x["model"] for x in rows if x["sku"] == r["sku"]} for r in rows}
+    assert models == {"FX-FOOD": {ENSEMBLE}, "FX-NEW": {"lightgbm"}}
+    new = next(r for r in rows if r["sku"] == "FX-NEW" and r["horizon"] == 1)
+    assert new["p50"] == 30 and new["hi80"] == int(np.rint(31 * np.exp(0.5) - 1))  # values as before
+    with pytest.raises(ValueError, match="parts are needed"):
+        forecast_rows(h, {"FX-NEW": ENSEMBLE}, quantiles, 42, by_model={ENSEMBLE: ensemble(parts)})

@@ -25,6 +25,8 @@ export const SERIES_STROKE = [
 
 /** Maroon at low opacity, behind the primary series: never a second colour. */
 export const BAND_COLOR = "var(--color-band)";
+/** The wider interval (95%), drawn under BAND_COLOR: the same maroon, lighter. */
+export const BAND_OUTER_COLOR = "var(--color-band-outer)";
 /** Recessive hairline grid. */
 export const GRID_COLOR = "var(--color-line)";
 /** Baselines, the forecast divider and the hover cursor: ink-400 meets 3:1 for marks. */

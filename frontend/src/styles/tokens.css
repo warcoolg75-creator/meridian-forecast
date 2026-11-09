@@ -95,6 +95,12 @@
   /* Confidence band: the primary series' maroon as a wash, never a second colour. */
   --color-band: color-mix(in srgb, var(--color-maroon-500) 14%, transparent);
   /*
+   * The wider (95%) band, under --color-band (80%): the same maroon, lighter, never a second
+   * hue. Measured over cream-50 (OKLab deltaE x100): cream to this band 4.3, this band to the
+   * 80% band drawn over it 7.1 (CLAUDE.md, Chart rules).
+   */
+  --color-band-outer: color-mix(in srgb, var(--color-maroon-500) 8%, transparent);
+  /*
    * Event annotations on a chart (holidays as rules, promotions as washes). ink-400: it
    * separates from maroon-500 (deltaE 18.1, CLAUDE.md) and is used only on charts whose
    * series do not already use ink-400 (one series, e.g. a product's history).

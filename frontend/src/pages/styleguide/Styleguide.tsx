@@ -71,6 +71,7 @@ const ROLES: Record<string, string> = {
   "series-2": "Chart series 2: comparison. Marks only (3.33:1 meets the 3:1 for marks)",
   "series-3": "Chart series 3. Marks only. There is no series 4",
   band: "Confidence band: maroon-500 at 14%, shown here over cream-50",
+  "band-outer": "Wider (95%) band: maroon-500 at 8%, under the 80% band, shown over cream-50",
 };
 
 const FAMILIES: Array<[string, RegExp]> = [

@@ -9,6 +9,9 @@ export type KeyShape =
   | "dashed"
   | "bar"
   | "band"
+  // Two nested intervals: the inner one drawn over the outer, as on the chart.
+  | "band-inner"
+  | "band-outer"
   | "event-band"
   | "event-line"
   // The sign of a change: an arrow in sage or clay, and a ring for "no comparison".
@@ -26,6 +29,16 @@ export function SeriesKey({ shape, series = 0 }: { shape: KeyShape; series?: num
   }
   if (shape === "band") {
     return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-band" />;
+  }
+  if (shape === "band-outer") {
+    return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-band-outer" />;
+  }
+  if (shape === "band-inner") {
+    return (
+      <span aria-hidden className="flex h-3 w-4 shrink-0 rounded-control bg-band-outer">
+        <span className="size-full rounded-control bg-band" />
+      </span>
+    );
   }
   if (shape === "event-band") {
     return <span aria-hidden className="h-3 w-4 shrink-0 rounded-control bg-annotation-band" />;
@@ -48,7 +61,15 @@ export function SeriesKey({ shape, series = 0 }: { shape: KeyShape; series?: num
   if (shape === "event-line") {
     return (
       <svg aria-hidden viewBox="0 0 4 12" className="h-3 w-1 shrink-0 overflow-visible">
-        <line x1="2" y1="0" x2="2" y2="12" strokeWidth="1.5" className="stroke-annotation" />
+        <line
+          x1="2"
+          y1="0"
+          x2="2"
+          y2="12"
+          strokeWidth="1.5"
+          strokeDasharray="2 2"
+          className="stroke-annotation"
+        />
       </svg>
     );
   }

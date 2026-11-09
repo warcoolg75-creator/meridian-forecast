@@ -27,7 +27,9 @@ def test_the_production_forecast_is_byte_identical_across_runs():
     second = forecast_rows(h, CHAMPIONS, quantiles, seed=42)
     assert first == second
     assert digest(first) == digest(second)
-    assert {r["model"] for r in first} == {ENSEMBLE, "ets"}
+    # Each row names the model actually used: FX-NEW's ensemble is LightGBM alone.
+    assert {(r["sku"], r["model"]) for r in first} == {("FX-FOOD", ENSEMBLE), ("FX-FAN", "ets"),
+                                                       ("FX-NEW", "lightgbm")}
     assert len(first) == 3 * 26
 
 

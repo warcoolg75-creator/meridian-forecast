@@ -11,7 +11,7 @@ authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI 
 library, is built (2026-10-13). Phase 4, sales analytics, is closed (2026-11-04). Phase 5a,
 the forecasting engine and backtest (backend only), is closed (2026-11-09) after v1 and one
 v2 improvement round; its forecasting is frozen (see Known issues). Phase 5b, the forecast
-page, has not started. Phase 10 ends with a sealed final test, planned below under
+pages, is closed (2026-11-09), and with it phase 5. Phase 6 has not started. Phase 10 ends with a sealed final test, planned below under
 Forecasting and not to be built or looked at before then.
 
 ## Stack
@@ -46,7 +46,8 @@ its reason names, and re-run `make build` and `make lint`.
 - Quantities are integers.
 - Dates and timestamps are ISO-8601, UTC.
 - Every API response is a Pydantic model. Documented exception: file downloads
-  (`GET /api/v1/imports/sales/template` returns `text/csv`).
+  (`GET /api/v1/imports/sales/template` and `GET /api/v1/forecasts/{sku}/csv` return
+  `text/csv`; `GET /api/v1/backtest/report` returns `text/markdown`).
 - Every endpoint ships with a pytest test in the same change.
 
 ## Commands (run from the repo root)
@@ -61,6 +62,11 @@ its reason names, and re-run `make build` and `make lint`.
   without one. Both need the `ml` extra.
 - `make verify-analytics`: recompute every analytics figure in pandas straight from the
   tables and compare it with the running API (`make run` first). Exit 1 on any mismatch.
+- `make verify-forecast`: the same for the forecast pages (`tools/verify_forecast.py`), from
+  `forecasts`, `backtest_metrics`, `backtest_forecasts`, `daily_sales` and `calendar_events`;
+  also checks the CSV equals the JSON and the Gift Box peak (see Forecast pages). `make run` first.
+- `make backtest-forecasts`: recompute the latest backtest (about 7 min) and store its held-out
+  champion forecasts, h 1-4; writes nothing unless every stored score it checks matches exactly.
 - Frontend: `make dev` (API on :8000 plus Vite on http://127.0.0.1:5173, which proxies
   `/api`), `make web` (Vite only), `make build` (token checks, ESLint, type check, then
   `frontend/dist`), `make lint` (token checks, ESLint, Prettier). These run `npm ci` first
@@ -292,7 +298,12 @@ its reason names, and re-run `make build` and `make lint`.
 - **Maroon is the primary series.** Further series use the measured slots below and ink,
   never new hues.
 - **A confidence band is maroon at low opacity** (`--color-band`, maroon-500 at 14%),
-  never a second colour.
+  never a second colour. Two nested intervals (phase 5b: 80% and 95%) are two maroon washes:
+  `--color-band-outer` (maroon-500 at 8%) for the 95% band, under `--color-band` for the 80%
+  one. Measured over cream-50 (OKLab ΔE x100): cream to the 95% band 4.3, the 95% band to
+  the 80% band over it 7.1. Legend keys `band-outer` and `band-inner` (the inner over the outer).
+- **Holiday and festival rules are dotted** (2 3) since phase 5b, on every chart, so they never
+  read as the solid actual/forecast divider beside them.
 - **Never colour a data series sage, amber or clay**: those mean good, warning and bad,
   not identity.
 - **Every axis is labelled with its unit, and every chart has an accessible
@@ -503,8 +514,13 @@ its last date tick ("Oct 2026" is 50px wide, centred on the plot's edge).
     Why "since launch": the Air Fryer (launched 2026-02-08) read CV 0.95 over 52 weeks and
     2.20 over 3 years from pre-launch zeros; since launch it is 0.53.
   - **XYZ here measures volume variability, not predictability.** A seasonal SKU with a
-    regular, forecastable festival peak lands in Z (the Gift Box, CV ~1.6). **Phase 5
-    should reclassify on the CV of forecast errors** once forecasts exist.
+    regular, forecastable festival peak lands in Z (the Gift Box, CV ~1.6). Phase 5a
+    reclassified on the CV of forecast errors (stored with the backtest run, `xyz`).
+  - **Two XYZ classes, two names on screen** (since phase 5b): **"Demand variability"** on the
+    products pages (volume CV, this section) and **"Forecastability"** on the forecast pages
+    (the champion's backtest error CV, same thresholds), each with a one-line tooltip
+    (`pages/app/forecast/Forecastability.tsx`). Never show either as bare "XYZ" or
+    "variability": a Gift Box is variable demand (Z) yet forecastable (Y).
 - **Pagination**: `/sales/daily` is keyset-paged (`cursor` / `next_cursor`, no `offset`
   or `total`); see Known issues for the measurements.
 - **SQLite performance notes** (the local p95 target is 300 ms per call):
@@ -682,6 +698,52 @@ has seen, scored once:
 - **Do not generate it or look at it before phase 10.** Until then it does not exist, so
   nothing can be tuned against it.
 
+## Forecast pages (phase 5b)
+
+- **Pages**: `/app/forecast` (every SKU: next 4 / 13 weeks, change against the same weeks
+  364 days earlier, held-out skill, ABC + forecastability, a short-history badge),
+  `/app/forecast/:sku` (52 weeks of actuals, the 26-week forecast dashed with 80% and 95%
+  bands, horizon 4 / 13 / 26 in the URL as `h`, CSV download, accuracy, past forecasts,
+  allocated state and channel bars) and `/app/forecast/evidence` (leaderboard bars with
+  the oracle floor, the forward oracle test, the report download). The fixed `evidence`
+  route outranks `:sku`.
+- **Endpoints** (signed-in, any role): `/forecasts/overview`, `/forecasts/oracle-test`,
+  `/forecasts/{sku}?horizon=4|13|26`, `/forecasts/{sku}/csv`, `/forecasts/{sku}/context`,
+  `/backtest/report` (one fixed file, `docs/backtest-report.md`; no path parameter). The
+  fixed paths are declared before `/{sku}`; `test_overview_is_its_own_route_not_a_sku`
+  calls `/forecasts/overview` directly. `horizon` is checked in a dependency: a query
+  string never validates as `Literal[4, 13, 26]`.
+- **Every number comes from the stored runs.** The page only sums (next 4 / 13 weeks,
+  allocated units: sums of weekly medians, and labelled so), formats and plots.
+- **No peak marking in the UI: phase 7 owns peaks.** The forecast chart marks holidays and
+  festivals in the horizon (rules plus a list under the chart), never a peak label.
+  `make verify-forecast` checks the Gift Box's stored peak: w/c 2026-10-26, inside the
+  Diwali 2026 weeks (10-26, 11-02); Diwali is marked in w/c 11-02.
+- **Past forecasts (`backtest_forecasts`, migration 0006)**: the backtest stored only
+  scores, so `make backtest-forecasts` re-runs backtest run 7 (deterministic) and stores the
+  champion's held-out forecast-weeks at horizons 1-4 (156 rows: 12 SKUs x 13 weeks; floats,
+  the raw values that were scored). It refuses to write unless the champions match and every
+  per-SKU held-out champion score at h1 and h4 (n weeks, WAPE, bias, MASE, 80% / 95%
+  coverage, with and without shock weeks: 48 rows) equals `backtest_metrics` exactly; it
+  did on 2026-11-09 (436 s). **This viewed the held-out window a third time. It chose
+  nothing and scored nothing new**: its scores were only compared with the stored ones, and
+  the page shows no coverage count of its own. Origins are every 4 weeks, so each held-out
+  week has exactly one forecast made 1-4 weeks before it; the chart is labelled "forecast
+  made 1-4 weeks before", never "4 weeks ahead" (h=4 alone gives only 4 points).
+- **Short-history SKUs**: the forecast is LightGBM alone. Since 2026-11-09 the production
+  writer stores the model actually used per row (`production.model_used`: `lightgbm`, not
+  `prophet_lightgbm`); run 8 predates that (see Known issues), so the pages still map that
+  label (`shownModel`). They explain the wider (young-table) intervals and the missing
+  seasonal-naive comparison.
+- **Trend arrows are 20px** (`size-5`, `SignedChange` and `KpiCard`) since phase 5b: at 16px
+  the glyph (about 7px) read smaller than the 16px figures beside it. Compared side by side
+  on the forecast overview (`docs/screenshots/phase-5b/arrows-16px.png` / `-20px.png`).
+- **`docs/screenshots/` is gitignored**: review screenshots, not docs. README images are
+  picked by hand.
+- Verification (2026-11-09): `make verify-forecast` compared 1,038 values (each a figure or
+  a list of them: every week of every SKU at every horizon, the CSV, both allocations, the
+  context, the leaderboard, the oracle test) and all matched.
+
 ## Authentication rules established in phase 2
 
 - Access token: 15 minutes, sent as `Authorization: Bearer`, held only in client memory
@@ -744,8 +806,19 @@ has seen, scored once:
   v1's four open items, for the record: per-SKU champion overfitting (gone with the
   ensemble), Prophet's shock carry-over (fixed), LightGBM's interval coverage as champion
   (71.5%; the champion is now the ensemble), and Diwali 4 of 6 (now 5 of 6).
-- Migration 0005 is on Supabase since 2026-11-09 (Alembic 0005, 20 tables, RLS on all,
-  the three forecast tables empty). No forecasts are to be written there.
+- **Forecast run 8 labels the Air Fryer's rows `prophet_lightgbm`, though its forecast is
+  LightGBM alone** (Prophet cannot fit 35 weeks; the ensemble's mean is then LightGBM's
+  forecast). Run 8 is left as it is, the record of what ran. Fixed in the writer on
+  2026-11-09 (`production.model_used`, tested in `test_forecast_v2.py`): later runs store the
+  model actually used. Only the label changed, never a value, so the forecasting freeze holds;
+  but the label is part of the digest, so a new run's digest will differ from run 8's
+  `0f1c879b...` for that reason alone (its values will not). The frontend's `shownModel`
+  covers run 8.
+- **Supabase is at migration 0005; 0006 (`backtest_forecasts`) is pending and must be applied
+  before deployment** (`make migrate` with `DATABASE_URL` set to it, then check the table
+  exists with RLS on). Phase 5b did not connect to Supabase at all: no migrate, no reads, no
+  writes. 0005 has been there since 2026-11-09 (20 tables, RLS on all, the forecast tables
+  empty). No forecasts are to be written there.
 
 - **Resolved in phase 4: `/sales/daily` deep pagination.** OFFSET paging re-ran the
   count and the whole GROUP BY for every page. Measured 2026-10-17 on the day-level sku x

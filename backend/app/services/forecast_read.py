@@ -2,13 +2,16 @@
 the stored runs (app.forecasting writes them)."""
 
 import statistics
-from datetime import timedelta
+from datetime import date, timedelta
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session, aliased
 
 from app.models import (
+    BacktestForecast,
     BacktestMetric,
+    CalendarEvent,
+    EventType,
     Forecast,
     ForecastRun,
     ForecastRunKind,
@@ -20,17 +23,27 @@ from app.models import (
     WeeklySales,
 )
 from app.schemas.forecasting import (
+    ActualWeek,
     Allocation,
     AllocatedGroup,
     AllocatedWeek,
     Assumptions,
     ChampionRow,
+    ForecastOverviewResponse,
     ForecastWeek,
+    HorizonEvent,
     LeaderboardRow,
     MetricRow,
+    OracleTestResponse,
+    OracleTestScore,
+    OverviewRow,
+    PastForecastWeek,
     RunInfo,
+    SkuAccuracy,
     SkuForecast,
+    SkuForecastContext,
 )
+from app.services.analytics import classify
 from app.services.errors import NotFoundError
 
 SHARE_WEEKS = 13
@@ -167,3 +180,150 @@ def leaderboard(session: Session, run: ForecastRun, window: MetricWindow,
                                      skill=skill(c.wape if c else None, b.wape if b else None),
                                      coverage_80=c.coverage_80 if c else None))
     return models, champions
+
+
+# ---- Phase 5b: the forecast page ----
+
+LAST_YEAR = timedelta(days=364)  # 52 weeks: weekdays line up, as in the analytics comparison
+ACTUAL_WEEKS = 52
+ABC_WEEKS = 52
+PAST_MAX_HORIZON = 4
+CSV_COLUMNS = ("sku", "week", "horizon", "model", "p50", "lo80", "hi80", "lo95", "hi95")
+
+
+def backtest_of(session: Session, production: ForecastRun) -> ForecastRun:
+    """The backtest run a production run's champions and intervals came from."""
+    run_id = production.params.get("backtest_run_id")
+    run = session.get(ForecastRun, run_id) if run_id else None
+    return run or latest(session, ForecastRunKind.BACKTEST)
+
+
+def _monday(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def _weekly_units(session: Session, first: date, last: date) -> dict[tuple[str, date], int]:
+    rows = session.execute(
+        sa.select(Product.sku, WeeklySales.period_start, sa.func.sum(WeeklySales.units))
+        .join(Product, Product.id == WeeklySales.product_id)
+        .where(WeeklySales.period_start.between(first, last))
+        .group_by(Product.sku, WeeklySales.period_start))
+    return {(sku, week): int(units) for sku, week, units in rows}
+
+
+def overview(session: Session, run: ForecastRun) -> ForecastOverviewResponse:
+    """Per SKU: the next 4 and 13 weeks' p50 against the same weeks 52 weeks earlier, the
+    held-out skill, ABC (revenue, 52 weeks to the cutoff) and forecastability (XYZ on the
+    champion's backtest error CV, stored with the backtest run)."""
+    items = sku_forecasts(session, run)
+    backtest = backtest_of(session, run)
+    launched = dict(session.execute(sa.select(Product.sku, Product.launched_on)).all())
+    history_from = session.scalar(sa.select(WeeklySales.period_start).order_by(WeeklySales.period_start).limit(1))
+    starts = [w.week for i in items for w in i.weeks]
+    last_year = _weekly_units(session, min(starts) - LAST_YEAR, max(starts) - LAST_YEAR) if starts else {}
+    abc_from = run.training_cutoff - timedelta(weeks=ABC_WEEKS - 1)
+    abc_to = run.training_cutoff + timedelta(days=6)
+    revenue = dict(session.execute(
+        sa.select(Product.sku, sa.func.coalesce(sa.func.sum(WeeklySales.revenue_minor), 0))
+        .outerjoin(WeeklySales, sa.and_(WeeklySales.product_id == Product.id,
+                                        WeeklySales.period_start.between(abc_from, run.training_cutoff)))
+        .group_by(Product.sku)).all())
+    abc = classify.abc_classes({sku: int(v) for sku, v in revenue.items()})
+    xyz = {r["sku"]: r for r in backtest.params.get("xyz", [])}
+    champions = {c.sku: c for c in leaderboard(session, backtest, MetricWindow.HELD_OUT, ShockScope.INCLUDED)[1]}
+
+    rows = []
+    for item in items:
+        launch = _monday(launched[item.sku])
+
+        def sums(h: int) -> tuple[int, int | None, float | None]:
+            weeks = [w for w in item.weeks if w.horizon <= h]
+            ahead = sum(w.p50 for w in weeks)
+            before = [w.week - LAST_YEAR for w in weeks]
+            if any(d < launch or history_from is None or d < history_from for d in before):
+                return ahead, None, None
+            past = sum(last_year.get((item.sku, d), 0) for d in before)
+            return ahead, past, (ahead / past - 1) if past else None
+
+        n4, ly4, c4 = sums(4)
+        n13, ly13, c13 = sums(13)
+        on = launched[item.sku]
+        reason = (f"Launched {on.day} {on:%b %Y}: no sales in the same weeks last year"
+                  if ly4 is None or ly13 is None else None)
+        champion = champions.get(item.sku)
+        x = xyz.get(item.sku, {})
+        rows.append(OverviewRow(
+            sku=item.sku, name=item.name, model=item.model, short_history=item.short_history, next_4=n4,
+            next_13=n13, last_year_4=ly4, last_year_13=ly13, change_4=c4, change_13=c13,
+            no_comparison_reason=reason, skill=champion.skill if champion else None, abc=abc.get(item.sku),
+            forecastability=x.get("error_xyz"), error_cv=x.get("error_cv")))
+    return ForecastOverviewResponse(run=run_info(run), backtest_run_id=backtest.id, assumptions=assumptions(run),
+                                    models=sorted({i.model for i in items}), abc_from=abc_from, abc_to=abc_to,
+                                    xyz_x_below=classify.XYZ_X_BELOW, xyz_y_up_to=classify.XYZ_Y_UP_TO, items=rows)
+
+
+def limit_horizon(forecast: SkuForecast, horizon: int) -> SkuForecast:
+    return forecast.model_copy(update={"weeks": [w for w in forecast.weeks if w.horizon <= horizon]})
+
+
+def forecast_csv(forecast: SkuForecast) -> str:
+    lines = [",".join(CSV_COLUMNS)]
+    lines += [",".join(str(v) for v in (forecast.sku, w.week.isoformat(), w.horizon, forecast.model, w.p50, w.lo80,
+                                        w.hi80, w.lo95, w.hi95)) for w in forecast.weeks]
+    return "\n".join(lines) + "\n"
+
+
+def context(session: Session, run: ForecastRun, forecast: SkuForecast) -> SkuForecastContext:
+    """What the SKU forecast page draws around the forecast: 52 weeks of actuals, the
+    holidays and festivals in the horizon, the stored held-out scores and the held-out
+    weeks against the latest forecast made 1-4 weeks before each."""
+    backtest = backtest_of(session, run)
+    product = session.scalars(sa.select(Product).where(Product.sku == forecast.sku)).one()
+    weeks = [run.training_cutoff - timedelta(weeks=k) for k in range(ACTUAL_WEEKS - 1, -1, -1)]
+    units = _weekly_units(session, weeks[0], weeks[-1])
+    launch = _monday(product.launched_on)
+    actuals = [ActualWeek(week=w, units=None if w < launch else units.get((forecast.sku, w), 0)) for w in weeks]
+
+    first, last = forecast.weeks[0].week, forecast.weeks[-1].week + timedelta(days=6)
+    events = [
+        HorizonEvent(date=e.date, end_date=e.end_date, week=_monday(e.date), name=e.name,
+                     event_type=e.event_type.value, region_code=code)
+        for e, code in session.execute(
+            sa.select(CalendarEvent, Region.code).outerjoin(Region, Region.id == CalendarEvent.region_id)
+            .where(CalendarEvent.event_type.in_([EventType.PUBLIC_HOLIDAY, EventType.FESTIVAL]),
+                   CalendarEvent.date.between(first, last))
+            .order_by(CalendarEvent.date, CalendarEvent.name)).all()
+    ]
+
+    rows = {r.model: r for r in metric_rows(session, backtest, None, forecast.sku, MetricWindow.HELD_OUT,
+                                            ShockScope.INCLUDED, None) if r.horizon is None}
+    champion, base = rows.get("champion"), rows.get(BASELINE)
+    accuracy = None if champion is None else SkuAccuracy(
+        model=backtest.params.get("champions", {}).get(forecast.sku, forecast.model), n_weeks=champion.n_weeks,
+        wape=champion.wape, baseline_wape=base.wape if base else None,
+        skill=None if base is None or champion.wape is None or not base.wape else 1 - champion.wape / base.wape,
+        bias=champion.bias, coverage_80=champion.coverage_80, coverage_95=champion.coverage_95)
+
+    past = [PastForecastWeek(week=f.week, origin=f.origin, weeks_before=f.horizon, actual=f.actual, p50=f.p50,
+                             lo80=f.lo80, hi80=f.hi80)
+            for f in session.scalars(sa.select(BacktestForecast).where(
+                BacktestForecast.run_id == backtest.id, BacktestForecast.product_id == product.id,
+                BacktestForecast.horizon <= PAST_MAX_HORIZON).order_by(BacktestForecast.week))]
+    held_out_from = date.fromisoformat(backtest.params.get("held_out_start", run.training_cutoff.isoformat()))
+    return SkuForecastContext(run=run_info(run), backtest_run_id=backtest.id, sku=forecast.sku, name=forecast.name,
+                              short_history=forecast.short_history, launched_on=product.launched_on,
+                              actuals=actuals, events=events, accuracy=accuracy, held_out_from=held_out_from,
+                              past_forecasts=past)
+
+
+def oracle_test(run: ForecastRun) -> OracleTestResponse:
+    stored = run.params.get("forward_oracle")
+    if not stored:
+        raise NotFoundError("This forecast run has no forward oracle test: run make forecast")
+
+    def score(part: dict) -> OracleTestScore:
+        return OracleTestScore(skus=part["skus"], champion_wape=part["champion_wape"],
+                               naive_wape=part["naive_wape"], skill=part["skill"])
+
+    return OracleTestResponse(run=run_info(run), weeks_from=stored["weeks"][0], weeks_to=stored["weeks"][1],
+                              pooled=score(stored["pooled"]), festive=score(stored["festive_pooled"]))

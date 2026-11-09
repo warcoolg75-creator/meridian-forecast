@@ -24,6 +24,7 @@ import {
   ANNOTATION_BAND_COLOR,
   ANNOTATION_COLOR,
   BAND_COLOR,
+  BAND_OUTER_COLOR,
   GRID_COLOR,
   RULE_COLOR,
   SERIES_COLORS,
@@ -51,6 +52,9 @@ export interface TimeSeriesPoint {
   /** The confidence band around the band series at this date, when there is one. */
   low?: number | null;
   high?: number | null;
+  /** A wider interval around the same series (e.g. 95%), drawn lighter under low-high. */
+  outerLow?: number | null;
+  outerHigh?: number | null;
   /** Shown in the tooltip and the hidden table, e.g. "Partial week: 3 of 7 days". */
   note?: string;
 }
@@ -75,6 +79,8 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   forecastStart?: IsoDate;
   /** Names the low-high range, e.g. "80% interval". Set it to draw the band. */
   bandLabel?: string;
+  /** Names the wider outerLow-outerHigh range, e.g. "95% interval". Set it to draw it. */
+  outerBandLabel?: string;
   /** The series the band belongs to (default: the first). */
   bandSeries?: string;
   granularity?: Granularity;
@@ -126,6 +132,7 @@ export function TimeSeriesChart({
   data,
   forecastStart,
   bandLabel,
+  outerBandLabel,
   bandSeries,
   granularity = "week",
   yAxisLabel,
@@ -185,6 +192,12 @@ export function TimeSeriesChart({
               i === lastActual && typeof bandValue === "number"
               ? [bandValue, bandValue]
               : null;
+        row.outer =
+          typeof point.outerLow === "number" && typeof point.outerHigh === "number"
+            ? [point.outerLow, point.outerHigh]
+            : i === lastActual && typeof bandValue === "number"
+              ? [bandValue, bandValue]
+              : null;
         return row;
       }),
     [data, series, forecastStart, lastActual, bandSlot],
@@ -221,6 +234,8 @@ export function TimeSeriesChart({
     return map;
   }, [placed, data]);
   const hasBand = Boolean(bandLabel) && data.some((point) => typeof point.low === "number");
+  const hasOuter =
+    Boolean(outerBandLabel) && data.some((point) => typeof point.outerLow === "number");
   const hasForecast = lastActual >= 0 && lastActual < data.length - 1;
   const isForecastDate = (date: IsoDate) => forecastStart !== undefined && date >= forecastStart;
 
@@ -230,7 +245,9 @@ export function TimeSeriesChart({
     series: slot,
   }));
   if (hasForecast) legend.push({ label: "Forecast", shape: "dashed", series: bandSlot });
-  if (hasBand && bandLabel) legend.push({ label: bandLabel, shape: "band" });
+  if (hasBand && bandLabel)
+    legend.push({ label: bandLabel, shape: hasOuter ? "band-inner" : "band" });
+  if (hasOuter && outerBandLabel) legend.push({ label: outerBandLabel, shape: "band-outer" });
   if (placed.some((e) => e.kind === "span"))
     legend.push({ label: eventLabels.span, shape: "event-band" });
   if (placed.some((e) => e.kind === "day"))
@@ -243,6 +260,7 @@ export function TimeSeriesChart({
     ...series.map((s) => s.label),
     ...(hasForecast ? ["Actual or forecast"] : []),
     ...(hasBand && bandLabel ? [`${bandLabel}, low`, `${bandLabel}, high`] : []),
+    ...(hasOuter && outerBandLabel ? [`${outerBandLabel}, low`, `${outerBandLabel}, high`] : []),
     ...(hasNotes ? ["Notes"] : []),
   ];
   const tableRows = data.map((point) => {
@@ -255,6 +273,12 @@ export function TimeSeriesChart({
       cells.push(
         typeof point.low === "number" ? formatValue(point.low) : "None",
         typeof point.high === "number" ? formatValue(point.high) : "None",
+      );
+    }
+    if (hasOuter && outerBandLabel) {
+      cells.push(
+        typeof point.outerLow === "number" ? formatValue(point.outerLow) : "None",
+        typeof point.outerHigh === "number" ? formatValue(point.outerHigh) : "None",
       );
     }
     if (hasNotes) {
@@ -336,11 +360,20 @@ export function TimeSeriesChart({
                   })}
                   {bandLabel && typeof point.low === "number" && typeof point.high === "number" && (
                     <TooltipRow
-                      shape="band"
+                      shape={hasOuter ? "band-inner" : "band"}
                       label={bandLabel}
                       value={`${formatValue(point.low)} – ${formatValue(point.high)}`}
                     />
                   )}
+                  {outerBandLabel &&
+                    typeof point.outerLow === "number" &&
+                    typeof point.outerHigh === "number" && (
+                      <TooltipRow
+                        shape="band-outer"
+                        label={outerBandLabel}
+                        value={`${formatValue(point.outerLow)} – ${formatValue(point.outerHigh)}`}
+                      />
+                    )}
                   {point.note && <p className="pt-1 text-fg-muted">{point.note}</p>}
                   {eventsByBucket.get(point.date)?.map((label) => (
                     <p key={label} className="text-fg-muted">
@@ -372,8 +405,20 @@ export function TimeSeriesChart({
                 x={e.x1}
                 stroke={ANNOTATION_COLOR}
                 strokeWidth={1}
+                // Dotted, so a holiday never reads as the solid actual/forecast divider.
+                strokeDasharray="2 3"
               />
             ))}
+          {hasOuter && (
+            <Area
+              dataKey="outer"
+              stroke="none"
+              fill={BAND_OUTER_COLOR}
+              fillOpacity={1}
+              activeDot={false}
+              isAnimationActive={!reducedMotion}
+            />
+          )}
           {hasBand && (
             <Area
               dataKey="band"
