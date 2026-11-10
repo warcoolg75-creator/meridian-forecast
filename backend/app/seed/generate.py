@@ -29,6 +29,7 @@ from sqlalchemy import func, insert, select, text
 from sqlalchemy.orm import Session
 
 from app.models import (
+    SIGNAL_TABLES,
     Base,
     CalendarEvent,
     Customer,
@@ -411,12 +412,14 @@ def build_calendar(gt: dict, ref: Reference, start: date, end: date, shutdowns: 
 # --------------------------------------------------------------------------- database
 
 
-def wipe_all(session: Session) -> None:
-    tables = [t.name for t in Base.metadata.sorted_tables]
+def wipe_all(session: Session, keep: tuple[str, ...] = ()) -> None:
+    """Empty every table except `keep`. The seed keeps the external signals (SIGNAL_TABLES):
+    they are not part of the pinned dataset and reference none of its tables."""
+    sorted_tables = [t for t in Base.metadata.sorted_tables if t.name not in keep]
     if session.get_bind().dialect.name == "postgresql":
-        session.execute(text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE"))
+        session.execute(text(f"TRUNCATE {', '.join(t.name for t in sorted_tables)} RESTART IDENTITY CASCADE"))
     else:
-        for table in reversed(Base.metadata.sorted_tables):
+        for table in reversed(sorted_tables):
             session.execute(table.delete())
 
 
@@ -424,7 +427,10 @@ def _sync_pg_sequences(session: Session) -> None:
     """Rows were inserted with explicit ids; move each id sequence past them."""
     if session.get_bind().dialect.name != "postgresql":
         return
+    # Only seeded tables with an id: the signal tables are not seeded (and one has no id).
     for table in Base.metadata.sorted_tables:
+        if table.name in SIGNAL_TABLES or "id" not in table.c:
+            continue
         session.execute(text(
             f"SELECT setval(pg_get_serial_sequence('{table.name}', 'id'), "
             f"COALESCE((SELECT MAX(id) FROM {table.name}), 0) + 1, false)"))
@@ -455,7 +461,7 @@ def generate(session: Session, *, seed: int = DEFAULT_SEED, end_date: date = DEF
     ref.rows[ProductionRun], ref.rows[Inventory] = simulate_production(gt, ref, daily_units, dates, shutdowns, seed)
     ref.rows[CalendarEvent] = build_calendar(gt, ref, start, end, shutdowns)
 
-    wipe_all(session)
+    wipe_all(session, keep=SIGNAL_TABLES)
     for model in LOAD_ORDER:
         bulk_insert(session, model, ref.rows.get(model, []))
     _sync_pg_sequences(session)

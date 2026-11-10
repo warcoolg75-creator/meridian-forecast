@@ -1,0 +1,11 @@
+{
+ "about": "FRED's recorded answer to an unregistered api_key, served for any observations call.",
+ "responses": [
+  {
+   "request": "GET https://api.stlouisfed.org/fred/series/observations",
+   "match": "prefix",
+   "status": 400,
+   "file": "fred_bad_key.json"
+  }
+ ]
+}

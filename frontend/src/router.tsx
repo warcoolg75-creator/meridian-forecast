@@ -8,6 +8,7 @@ import Dashboard from "./pages/app/Dashboard";
 import Evidence from "./pages/app/forecast/Evidence";
 import ForecastOverview from "./pages/app/forecast/ForecastOverview";
 import SkuForecastPage from "./pages/app/forecast/SkuForecastPage";
+import MarketPage from "./pages/app/market/MarketPage";
 import Planning from "./pages/app/Planning";
 import { ProductCrumb } from "./pages/app/ProductCrumb";
 import ProductDetail from "./pages/app/ProductDetail";
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
               },
             ],
           },
+          { path: "market", element: <MarketPage />, handle: { crumb: "Market" } },
           {
             // Production planning changes the plan: admins and planners only, as on the API.
             element: <RequireAuth roles={PLANNING_ROLES} />,

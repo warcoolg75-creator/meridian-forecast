@@ -28,7 +28,7 @@ ROLLUP_ARGS ?=
 VERIFY_ARGS ?=
 PYTEST_ARGS ?=
 
-.PHONY: venv migrate seed rollup rollup-periods backtest forecast backtest-forecasts verify-analytics verify-forecast test test-pg run dev web build lint hooks
+.PHONY: venv migrate seed rollup rollup-periods backtest forecast backtest-forecasts signals-backfill signals-refresh signals-status verify-analytics verify-forecast test test-pg run dev web build lint hooks
 
 venv:  ## create the virtualenv and install the backend with dev and ml extras
 	"$(BOOTSTRAP_PYTHON)" -m venv "$(VENV)"
@@ -55,6 +55,22 @@ forecast:  ## train each SKU's champion on all history and write a forecast run 
 
 backtest-forecasts:  ## recompute the latest backtest; store its held-out champion forecasts (h 1-4) only if its scores match exactly
 	cd backend && "$(PYTHON)" -m app.cli backtest-forecasts
+
+# External market signals (phase 6a): context only, never a forecasting input. FRED needs
+# FRED_API_KEY in .env (skipped as "not configured" without it). GDELT is slow on purpose
+# (one request a minute, one retry 10 min after a 429, then it stops): the default news
+# backfill, the last 90 days, is about 8 requests; SIGNALS_ARGS="--source gdelt --news-from-start"
+# reads from 2023-10-09 (about 52, over an hour) and resumes after the windows it finished.
+SIGNALS_ARGS ?=
+
+signals-backfill:  ## fetch weather, pageviews and input-cost prices from 2023-10-09, news the last 90 days (resumable)
+	cd backend && "$(PYTHON)" -m app.cli signals-backfill $(SIGNALS_ARGS)
+
+signals-refresh:  ## fetch what is new since the last run (idempotent: a second run writes nothing)
+	cd backend && "$(PYTHON)" -m app.cli signals-refresh $(SIGNALS_ARGS)
+
+signals-status:  ## row counts and gaps per signal series and news category
+	cd backend && "$(PYTHON)" -m app.cli signals-status
 
 verify-analytics:  ## recompute every analytics figure in pandas and compare with the running API (make run first)
 	cd backend && "$(PYTHON)" tools/verify_analytics.py $(VERIFY_ARGS)

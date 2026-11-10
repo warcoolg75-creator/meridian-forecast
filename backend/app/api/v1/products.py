@@ -10,6 +10,8 @@ from app.db import get_db
 from app.models import Product
 from app.schemas import ErrorResponse, Page, ProductRead
 from app.schemas.analytics import ProductDetail
+from app.schemas.market import ProductMarket
+from app.services import market
 from app.services.analytics.events import product_events
 from app.services.errors import NotFoundError
 from app.services.sales_source import Window, data_bounds
@@ -69,3 +71,16 @@ def product_detail(
     events = product_events(db, product, Window(events_from, events_to)) if events_from and events_to else []
     return ProductDetail(**ProductRead.model_validate(product).model_dump(), events=events,
                          events_from=events_from, events_to=events_to)
+
+
+@router.get(
+    "/{sku}/market",
+    response_model=ProductMarket,
+    dependencies=[Depends(get_current_user)],
+    responses={401: {"model": ErrorResponse, "description": "Not signed in"},
+               404: {"model": ErrorResponse, "description": "Unknown sku"}},
+)
+def product_market(sku: str, db: Annotated[Session, Depends(get_db)]) -> ProductMarket:
+    """The external signals mapped to this product, and why: context beside its sales, never
+    a forecasting input. Similar shapes reflect shared seasons, not cause and effect."""
+    return market.product_market(db, sku)

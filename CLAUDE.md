@@ -11,8 +11,11 @@ authentication, is built (2026-10-13). Phase 3, the app shell and the chart/KPI 
 library, is built (2026-10-13). Phase 4, sales analytics, is closed (2026-11-04). Phase 5a,
 the forecasting engine and backtest (backend only), is closed (2026-11-09) after v1 and one
 v2 improvement round; its forecasting is frozen (see Known issues). Phase 5b, the forecast
-pages, is closed (2026-11-09), and with it phase 5. Phase 6 has not started. Phase 10 ends with a sealed final test, planned below under
-Forecasting and not to be built or looked at before then.
+pages, is closed (2026-11-09), and with it phase 5. Phase 6a, external market signals
+(ingestion and display, context only), is built and committed (2026-11-10) with its news
+partial (GDELT blocked this address; see Known issues); phase 6b has not started.
+Phase 10 ends with a sealed final test, planned below under Forecasting and not to be built or
+looked at before then.
 
 ## Stack
 
@@ -67,6 +70,13 @@ its reason names, and re-run `make build` and `make lint`.
   also checks the CSV equals the JSON and the Gift Box peak (see Forecast pages). `make run` first.
 - `make backtest-forecasts`: recompute the latest backtest (about 7 min) and store its held-out
   champion forecasts, h 1-4; writes nothing unless every stored score it checks matches exactly.
+- `make signals-backfill` / `make signals-refresh` / `make signals-status`: external market
+  signals (phase 6a, context only). Backfill from 2023-10-09, news only the last 90 days
+  (resumable), refresh incrementally (a second run writes nothing), status prints rows and gaps
+  per series. `SIGNALS_ARGS="--source gdelt"` limits a run to one source (repeatable);
+  `--news-from-start` (backfill only) reads news from 2023-10-09 too; `--fail-fast` raises the
+  first failure.
+  Exit 1 when any source failed or was partial; the others are still stored.
 - Frontend: `make dev` (API on :8000 plus Vite on http://127.0.0.1:5173, which proxies
   `/api`), `make web` (Vite only), `make build` (token checks, ESLint, type check, then
   `frontend/dist`), `make lint` (token checks, ESLint, Prettier). These run `npm ci` first
@@ -744,6 +754,131 @@ has seen, scored once:
   a list of them: every week of every SKU at every horizon, the CSV, both allocations, the
   context, the leaderboard, the oracle test) and all matched.
 
+## External market signals (phase 6a)
+
+- **Context only, never a forecasting input.** The sales are synthetic: the generator never saw
+  weather, news, attention or prices, so a real signal cannot genuinely predict them, and any
+  lift would be coincidence or shared seasonality. Nothing under `app/forecasting/` imports
+  `app/signals/`. Every market view carries the permanent note "Context only. Our sales data
+  is synthetic, so these signals are not used in the forecast." (`CONTEXT_NOTE`, backend
+  `schemas/market.py` and frontend `pages/app/market/present.ts`), and the product page's
+  Market context panel carries "Similar shapes here reflect shared seasons, not cause and
+  effect." under its heading. Phase 6b tests, on scratch copies, whether the evaluation
+  detects a planted real signal and rejects a fake one.
+- **Sources** (verified 2026-11-09, live probes plus terms; see Data licences):
+  - Open-Meteo archive + forecast (no key): daily max temperature and rainfall for the 9 cities,
+    ERA5 from 1940; the last ~5 days are model analysis, revised when ERA5 lands, so a refresh
+    re-reads 14 days. The 16-day forecast is its own series (`*_forecast.*`, `companion_key`),
+    replaced whole each run, never mixed into observations.
+  - FRED (`FRED_API_KEY` in `.env`): copper, aluminium, sugar (IMF, monthly, ~3-week lag),
+    Brent (EIA, daily) and INR/USD (Fed H.10, daily, ~1-week lag). **Input costs for phase 9
+    planning, not demand** (`role = input_cost`). Without a key: "not configured", not stale.
+  - **Wikipedia pageviews instead of Google Trends.** pytrends was dropped: archived on
+    2025-04-17, unofficial (it calls Google's internal endpoints, i.e. scraping), and its 0-100
+    rescaling per request makes an idempotent refresh impossible. The official Trends API is an
+    application-only alpha. Pageviews (Wikimedia Analytics API, no key, CC0) are **worldwide
+    English Wikipedia views, not Indian search**, and every screen says so. Articles with too
+    few views (Air cooler 2/day, Mithai 6/day) or none (Mixer grinder) are not used.
+  - GDELT DOC 2.0 (no key): headlines and metadata only, never bodies. Its docs say "last 3
+    months" but it answers back to 2017 (probed Oct 2023). `published_at` is GDELT's `seendate`
+    (when it first saw the article), labelled so on screen. Titles keep their language (Hindi,
+    Bengali...). The Cooling query excludes -suicide -hanging -hanged: "ceiling fan" otherwise
+    matches reports of deaths, which are not market news.
+- **Tables (migration 0007, RLS on all 7)**: `signal_sources`, `signal_series`,
+  `signal_observations` (unique per series and day), `signal_fetches` (one row per source run:
+  counts, redacted error, raw cache dir, GDELT's finished windows), `signal_mappings`,
+  `news_items` (unique by sha256 of the URL), `news_item_categories`. Every observation and
+  headline carries `fetched_at` and `fetch_id` (provenance). **No foreign key to products or
+  regions**, and `make seed` keeps these tables (`wipe_all(keep=SIGNAL_TABLES)`): fetched
+  signals survive a reseed. A run that never finished is closed as failed by the next one.
+- **The catalog is data**: `backend/app/signals/catalog.json` holds sources (with their HTTP
+  policy), series, city coordinates (the `regions` table has none), GDELT keyword topics and
+  the mapping of series to categories (the market page) and SKUs (the product panel), each
+  with its reason. Both make targets sync it idempotently; a series that leaves the catalog
+  keeps its rows and loses its mappings.
+- **News history: the last 90 days by default (decided 2026-11-10).** The market page shows
+  recent headlines and phase 8 classifies recent headlines, so three years of news are not
+  needed, and asking GDELT for them got this address blocked for over seven hours. So a
+  backfill reads news from the first of the month 90 days back (`news.backfill_days` in
+  catalog.json): two quarterly windows per category, about 8 requests in all.
+  `--news-from-start` keeps the full read from 2023-10-09 (13 windows per category, about 52
+  requests at one a minute) as an option. Headlines already stored from earlier runs stay.
+- **News windows**: a backfill walks quarterly windows from that start, skipping those a
+  previous backfill finished; a refresh re-reads monthly windows from the first of the month
+  that holds the latest stored headline less two days (never before the 90-day start), so its
+  request is the same all month.
+- **Pipeline** (`app/signals/`): each source in its own session, transaction and try/except, so
+  one failing source never blocks the others or the app. Upserts compare values (insert new,
+  update changed, leave equal rows alone, `fetched_at` included), so a second refresh writes
+  nothing. Pacing, retries with backoff and Retry-After, and a raw-response cache in
+  `backend/.cache/signals/` (gitignored, redacted, named by a hash of the URL without its key).
+- **GDELT is slow on purpose and still fragile.** It answers in ~12 s, asks for "one request
+  every 5 seconds", and in practice refused every request for many minutes after two requests
+  30 s apart (2026-11-10), and kept refusing this machine's address for well over 20 minutes
+  while it answered the same query from elsewhere: the block is per address, and refused
+  retries seem to extend it. Hence: one request per 60 s, quarterly windows split in half while
+  they return the 250-record cap, one retry after 10 minutes on a 429, and a circuit breaker:
+  the first window still refused stops the run (finished windows are kept; the next backfill
+  resumes after them). Never run two GDELT jobs at once (a backfill and
+  `tools/record_signal_fixtures.py` share the limit).
+- **Staleness** (`services/market.py`, real clock): a series is stale when its last attempt
+  failed or its last success is older than its `stale_after_days` (weather, pageviews, news 3;
+  FRED daily 7; FRED monthly 35). The UI shows an amber "Stale" badge with the reason, and
+  every chart shows its last refresh date and its latest value's date. **News is "Partial"**
+  (amber too) when its last run failed or stopped early while earlier runs left headlines
+  stored: those are shown, with a reason written for the page ("stopped at GDELT's rate limit
+  (HTTP 429)"); GDELT's own 429 text stays in `make signals-status`. With nothing stored, a
+  failed news run is stale. Other sources' incomplete runs are stale, as before.
+- **Secrets**: the FRED key travels in the URL (FRED accepts it nowhere else) and httpx puts
+  URLs in its logs and exception messages. `app/signals/redact.py` masks the key, every
+  `api_key=` value, the JWT secret and the database URLs' password, host and user at every
+  exit: log records, sys.stdout and sys.stderr (line-buffered), sys.excepthook and the CLI's
+  own handler, stored errors and the cache. `python -m app.cli` installs it for every command.
+  `tests/test_signals_redaction.py` runs the real CLI in a subprocess with a planted key and
+  httpx's own `raise_for_status` (whose message holds the full URL) and asserts the key is in
+  neither stream, for an isolated error, a `--fail-fast` traceback and an exception uncaught at
+  the top of the interpreter.
+- **Tests replay recorded responses** (`tests/fixtures/signals/`, 14 responses, 84 KB, by
+  `tools/record_signal_fixtures.py`): the real pipeline on a trimmed catalog (2 cities, 2 FRED
+  series, 2 articles, Kitchen Appliances news) **as of 2023-12-01**, from 2023-10-09. Open-Meteo,
+  FRED and Wikimedia were fetched live on 2026-11-10; GDELT is never fetched live by the
+  recorder (it was blocking this address): its two answers (Oct and Nov 2023) are the ones the
+  real backfill received that morning, taken from the raw cache, URLs and bodies as received,
+  trimmed to their 6 newest articles. `app/signals/replay.py` serves them by URL (key
+  removed); `SIGNALS_REPLAY_DIR` makes the CLI replay too. No test reaches the network: the
+  conftest guard, and an audit hook in the CLI subprocesses. Freshness is judged against the
+  real clock, so tests that check "fresh" move the recorded success times to now.
+- **Endpoints** (signed-in, any role): `/market/overview`, `/market/sources`,
+  `/market/series?keys=...&granularity=day|week|month` (mean or sum per series, in SQL; a
+  monthly series is never bucketed finer), `/market/headlines?category=`,
+  `/products/{sku}/market`.
+- **Display**: `/app/market` (sidebar "Market"): one category at a time (`?category=`), a city
+  picker for weather (`?city=`, New Delhi by default), demand context and input costs as small
+  single-series charts, recent headlines, and a Sources and licences panel with the FRED
+  notice and terms link. The product page's Market context panel puts the SKU's weekly sales
+  (maroon) above its mapped weekly signals (ink) on one shared week axis (same value-axis
+  width, `syncId`, padded to the same weeks), then its input costs at their own frequency.
+- **Signals are ink** (`TimeSeriesChart` `tone="context"`: one series, colour slot 2, ink-400),
+  never maroon (our sales), sage or clay. No holiday annotations on them (annotations are ink
+  too). Charts spanning years of weekly points tick by month ("Oct 2023", `tickGranularity`).
+  `ChartFrame` takes a `persistentFooter`, shown in every state but loading, so a series with
+  nothing to plot still shows its source and status.
+
+## Data licences
+
+Checked 2026-11-09 for phase 6a. **Phase 10 must revisit every line before any commercial
+deployment.**
+
+| Source | Licence and conditions | Commercial use |
+|---|---|---|
+| Open-Meteo | CC BY 4.0; "Weather data by Open-Meteo.com" with a link next to the data (every weather chart shows it) | **The free API is non-commercial only** (no ads, no subscriptions); commercial use needs a paid plan |
+| FRED (the API) | FRED API Terms of Use; show "This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis." and a link to the terms (the market page's Sources panel does) | Allowed by the terms; each series' own rights below |
+| IMF commodity series (copper, aluminium, sugar) via FRED | Copyrighted by the IMF; reuse with attribution ("Source: International Monetary Fund, ..."), no automated bulk download | **Needs IMF permission** (copyright@imf.org). If refused: the World Bank Pink Sheet (CC BY 4.0) |
+| EIA Brent, Fed INR/USD via FRED | Public domain, citation requested | Yes |
+| Wikimedia pageviews | CC0; requests need a User-Agent with a contact (`signals_user_agent`) | Yes |
+| GDELT | Unlimited and unrestricted, including commercial; **must cite the GDELT Project with a link** (the headlines card does). Articles belong to their publishers: headlines and links only | Yes |
+| Google Trends | Not used (see phase 6a) | n/a |
+
 ## Authentication rules established in phase 2
 
 - Access token: 15 minutes, sent as `Authorization: Bearer`, held only in client memory
@@ -814,11 +949,30 @@ has seen, scored once:
   but the label is part of the digest, so a new run's digest will differ from run 8's
   `0f1c879b...` for that reason alone (its values will not). The frontend's `shownModel`
   covers run 8.
-- **Supabase is at migration 0005; 0006 (`backtest_forecasts`) is pending and must be applied
-  before deployment** (`make migrate` with `DATABASE_URL` set to it, then check the table
-  exists with RLS on). Phase 5b did not connect to Supabase at all: no migrate, no reads, no
-  writes. 0005 has been there since 2026-11-09 (20 tables, RLS on all, the forecast tables
+- **Supabase is at migration 0005; 0006 (`backtest_forecasts`) and 0007 (the seven signal
+  tables) are pending and must be applied before deployment** (`make migrate` with
+  `DATABASE_URL` set to it, then check every new table exists with RLS on). Phases 5b and 6a
+  did not connect to Supabase at all: no migrate, no reads, no writes, no signals fetched into it. 0005 has been there since 2026-11-09 (20 tables, RLS on all, the forecast tables
   empty). No forecasts are to be written there.
+
+- **News (GDELT) is partial (2026-11-10); phase 6a was committed with it so.** GDELT
+  answered three requests that morning, then refused this machine's address (HTTP 429) on
+  every attempt from 04:45 UTC, while the same query from another network worked. One resume
+  attempt after a three-hour pause was refused too, at 10:37 UTC and on its retry at about
+  12:29 UTC: over seven hours in all, after only a handful of requests. The dev database holds
+  86 headlines, all Kitchen Appliances, 9 Oct - 30 Nov 2023; the other three categories have
+  none. The market page shows news as "Partial" with the reason, and everything else working:
+  failure isolation held against a real outage. Weather, FRED and pageviews are complete from
+  2023-10-09 (gaps only on FRED's market holidays).
+  - **Next: the 90-day news backfill** (the new default, about 8 requests), run once by hand:
+    `make signals-backfill SIGNALS_ARGS="--source gdelt"`. Not on the day of a refusal, and
+    never in a loop: refused retries seem to extend the block. It stops itself at the first
+    refusal and resumes after the windows it finished.
+  - If it is still refused, the address is probably shared (a carrier or campus NAT, whose
+    other users' requests count against it): run it once from another network, such as a
+    phone hotspot.
+  - Keep the laptop awake for a long run: Modern Standby pauses it (on 2026-11-10 a 10-minute
+    retry wait became 1 h 52 min).
 
 - **Resolved in phase 4: `/sales/daily` deep pagination.** OFFSET paging re-ran the
   count and the whole GROUP BY for every page. Measured 2026-10-17 on the day-level sku x

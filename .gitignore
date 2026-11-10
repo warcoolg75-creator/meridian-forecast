@@ -22,3 +22,6 @@ frontend/dist/
 
 # Screenshots for review (phase 5b on); README images are picked by hand later.
 docs/screenshots/
+
+# Raw responses of the external signal APIs (phase 6a): cached, never committed
+backend/.cache/

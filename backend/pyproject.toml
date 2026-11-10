@@ -20,6 +20,8 @@ dependencies = [
     # Auth: argon2id password hashes (pwdlib, the maintained successor to passlib) and JWTs.
     "pwdlib[argon2]>=0.3.1",
     "PyJWT>=2.15",
+    # Phase 6a: fetching external market signals (its MockTransport serves the test fixtures).
+    "httpx>=0.28,<0.29",
     # Pinned exactly: for a given seed the generator must reproduce ground_truth.json
     # and the sampled history byte-for-byte. NumPy does not guarantee Generator streams
     # across versions, and a holidays release can move a festival date.
@@ -38,7 +40,7 @@ ml = ["prophet==1.5.0", "cmdstanpy==1.3.0", "lightgbm==4.7.0", "statsmodels==0.1
 include = ["app*"]
 
 [tool.setuptools.package-data]
-app = ["seed/*.json"]
+app = ["seed/*.json", "signals/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

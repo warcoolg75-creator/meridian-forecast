@@ -27,6 +27,7 @@ export function ChartFrame({
   dataTable,
   actions,
   footer,
+  persistentFooter,
   children,
 }: {
   title: string;
@@ -38,6 +39,9 @@ export function ChartFrame({
   actions?: ReactNode;
   /** Shown under the plot when it is drawn, e.g. a note on what the data cannot say. */
   footer?: ReactNode;
+  /** Shown in every state but loading, e.g. a data source and its status: it matters most
+   * when there is nothing to plot. */
+  persistentFooter?: ReactNode;
   /** Value axis or vertical axis title, with its unit: shown above the plot. */
   yAxisTitle: string;
   /** Horizontal axis title, with its unit: shown below the plot. */
@@ -102,6 +106,7 @@ export function ChartFrame({
             <div aria-hidden className="h-4" />
           </div>
         )}
+        {view.kind !== "loading" && persistentFooter}
       </figure>
     </Card>
   );

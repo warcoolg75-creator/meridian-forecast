@@ -84,6 +84,8 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   /** The series the band belongs to (default: the first). */
   bandSeries?: string;
   granularity?: Granularity;
+  /** Date ticks as if at this granularity: "month" labels weekly points over years "Oct 2023". */
+  tickGranularity?: Granularity;
   /** Vertical axis title with its unit, e.g. "Units sold (units per week)". */
   yAxisLabel: string;
   /** Horizontal axis title, e.g. "Week starting". */
@@ -104,6 +106,8 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   actions?: ReactNode;
   /** Under the plot, e.g. a note on festivals that moved between years. */
   footer?: ReactNode;
+  /** Under the plot or the state that replaces it (not while loading), e.g. a data source. */
+  persistentFooter?: ReactNode;
   /** A fixed value-axis width instead of one sized to the ticks; needed by `alignToBars`. */
   yAxisWidth?: number;
   /**
@@ -113,6 +117,11 @@ export interface TimeSeriesChartProps extends ChartStateProps {
   alignToBars?: boolean;
   /** Recharts' syncId: hovering one chart shows the same period in the other. */
   syncId?: string;
+  /**
+   * "context": one outside series (a market signal) drawn in ink (series slot 2), never
+   * maroon, which means our sales. A context chart takes exactly one series.
+   */
+  tone?: "primary" | "context";
 }
 
 type Row = Record<string, string | number | null | [number, number]>;
@@ -135,6 +144,7 @@ export function TimeSeriesChart({
   outerBandLabel,
   bandSeries,
   granularity = "week",
+  tickGranularity,
   yAxisLabel,
   xAxisLabel,
   formatValue = formatInteger,
@@ -144,11 +154,15 @@ export function TimeSeriesChart({
   eventLabels = { span: "Promotion", day: "Holiday or festival" },
   actions,
   footer,
+  persistentFooter,
   yAxisWidth,
   alignToBars = false,
   syncId,
+  tone = "primary",
   ...state
 }: TimeSeriesChartProps) {
+  // Colour slot of each series: in context tone the lone series takes ink (slot 1).
+  const colorSlot = (index: number) => (tone === "context" ? 1 : index);
   const reducedMotion = usePrefersReducedMotion();
   const [chartWidth, setChartWidth] = useState(0);
   // Half a band each side: points then sit where a bar chart centres its bars.
@@ -159,7 +173,14 @@ export function TimeSeriesChart({
   const hasValues = data.some((point) =>
     series.some((s) => typeof point.values[s.key] === "number"),
   );
-  const view = resolveChartView(state, { seriesCount: series.length, hasValues });
+  const view =
+    tone === "context" && series.length !== 1 && !state.isLoading && !state.error
+      ? ({
+          kind: "error",
+          title: "A context chart shows one series",
+          message: "Market signals are drawn one per chart, in ink, so none is read as our sales.",
+        } as const)
+      : resolveChartView(state, { seriesCount: series.length, hasValues });
 
   // The last actual period: the forecast line starts there too, so the two join up.
   const lastActual = useMemo(() => {
@@ -242,9 +263,9 @@ export function TimeSeriesChart({
   const legend: LegendEntry[] = series.map((s, slot) => ({
     label: s.label,
     shape: "line",
-    series: slot,
+    series: colorSlot(slot),
   }));
-  if (hasForecast) legend.push({ label: "Forecast", shape: "dashed", series: bandSlot });
+  if (hasForecast) legend.push({ label: "Forecast", shape: "dashed", series: colorSlot(bandSlot) });
   if (hasBand && bandLabel)
     legend.push({ label: bandLabel, shape: hasOuter ? "band-inner" : "band" });
   if (hasOuter && outerBandLabel) legend.push({ label: outerBandLabel, shape: "band-outer" });
@@ -300,6 +321,7 @@ export function TimeSeriesChart({
       xAxisTitle={xAxisLabel}
       actions={actions}
       footer={footer}
+      persistentFooter={persistentFooter}
       dataTable={
         <HiddenDataTable
           caption={`${title}. Values: ${yAxisLabel}.`}
@@ -319,7 +341,7 @@ export function TimeSeriesChart({
           <CartesianGrid vertical={false} stroke={GRID_COLOR} />
           <XAxis
             dataKey="date"
-            tickFormatter={(date: IsoDate) => formatDateTick(date, granularity)}
+            tickFormatter={(date: IsoDate) => formatDateTick(date, tickGranularity ?? granularity)}
             tick={{ className: TICK_CLASS }}
             tickLine={false}
             axisLine={{ stroke: RULE_COLOR }}
@@ -334,6 +356,10 @@ export function TimeSeriesChart({
             axisLine={false}
             // Sized to the widest tick unless fixed: a fixed 48px clipped the ₹ off "₹2.25Cr".
             width={yAxisWidth ?? "auto"}
+            // A context line (a price, a rate, a temperature) is read for its shape: fit the
+            // axis to its range instead of from zero, which flattened ₹ per US$ near 95.
+            // Sales stay from zero. Sums (rain, views) reach zero on their own.
+            domain={tone === "context" ? ["auto", "auto"] : undefined}
           />
           <Tooltip
             cursor={{ stroke: RULE_COLOR, strokeWidth: 1 }}
@@ -352,7 +378,7 @@ export function TimeSeriesChart({
                       <TooltipRow
                         key={s.key}
                         shape={forecast ? "dashed" : "line"}
-                        series={slot}
+                        series={colorSlot(slot)}
                         label={s.label}
                         value={typeof value === "number" ? formatValue(value) : "No data"}
                       />
@@ -433,8 +459,13 @@ export function TimeSeriesChart({
             <ReferenceLine
               x={data[lastActual].date}
               stroke={RULE_COLOR}
-              // Text starts at the divider and runs over the forecast side.
-              label={{ value: "Forecast", position: "insideTopLeft", className: TICK_CLASS }}
+              // Text starts at the divider and runs over the forecast side; a forecast tail
+              // too short to hold it (a few weeks at the end of years) has the legend's key only.
+              label={
+                data.length - lastActual - 1 >= Math.max(3, data.length / 10)
+                  ? { value: "Forecast", position: "insideTopLeft", className: TICK_CLASS }
+                  : undefined
+              }
             />
           )}
           {series.map((s, slot) => (
@@ -442,7 +473,7 @@ export function TimeSeriesChart({
               key={`actual-${s.key}`}
               dataKey={`actual${slot}`}
               name={s.label}
-              stroke={SERIES_COLORS[slot]}
+              stroke={SERIES_COLORS[colorSlot(slot)]}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4, stroke: SURFACE_COLOR, strokeWidth: 2 }}
@@ -455,7 +486,7 @@ export function TimeSeriesChart({
                 key={`forecast-${s.key}`}
                 dataKey={`forecast${slot}`}
                 name={`${s.label}, forecast`}
-                stroke={SERIES_COLORS[slot]}
+                stroke={SERIES_COLORS[colorSlot(slot)]}
                 strokeWidth={2}
                 strokeDasharray="6 4"
                 dot={false}

@@ -1,0 +1,75 @@
+{
+ "about": "Recorded by tools/record_signal_fixtures.py; URLs without the FRED key. GDELT answers come from a real backfill's raw cache (2026-11-10).",
+ "responses": [
+  {
+   "request": "GET https://archive-api.open-meteo.com/v1/archive?daily=temperature_2m_max%2Cprecipitation_sum&end_date=2023-11-30&latitude=28.6139&longitude=77.209&start_date=2023-10-09&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-001.json"
+  },
+  {
+   "request": "GET https://api.open-meteo.com/v1/forecast?daily=temperature_2m_max%2Cprecipitation_sum&forecast_days=16&latitude=28.6139&longitude=77.209&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-002.json"
+  },
+  {
+   "request": "GET https://archive-api.open-meteo.com/v1/archive?daily=temperature_2m_max%2Cprecipitation_sum&end_date=2023-11-30&latitude=13.0827&longitude=80.2707&start_date=2023-10-09&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-003.json"
+  },
+  {
+   "request": "GET https://api.open-meteo.com/v1/forecast?daily=temperature_2m_max%2Cprecipitation_sum&forecast_days=16&latitude=13.0827&longitude=80.2707&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-004.json"
+  },
+  {
+   "request": "GET https://api.stlouisfed.org/fred/series/observations?file_type=json&observation_end=2023-12-01&observation_start=2023-10-09&series_id=PCOPPUSDM",
+   "status": 200,
+   "file": "responses/stlouisfed-005.json"
+  },
+  {
+   "request": "GET https://api.stlouisfed.org/fred/series/observations?file_type=json&observation_end=2023-12-01&observation_start=2023-10-09&series_id=DCOILBRENTEU",
+   "status": 200,
+   "file": "responses/stlouisfed-006.json"
+  },
+  {
+   "request": "GET https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Evaporative_cooler/daily/2023100900/2023113000",
+   "status": 200,
+   "file": "responses/wikimedia-007.json"
+  },
+  {
+   "request": "GET https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Diwali/daily/2023100900/2023113000",
+   "status": 200,
+   "file": "responses/wikimedia-008.json"
+  },
+  {
+   "request": "GET https://api.gdeltproject.org/api/v2/doc/doc?enddatetime=20231101000000&format=json&maxrecords=250&mode=artlist&query=%28%22mixer+grinder%22+OR+%22air+fryer%22+OR+%22induction+cooktop%22+OR+%22kitchen+appliances%22%29+sourcecountry%3AIN&sort=datedesc&startdatetime=20231009000000",
+   "status": 200,
+   "file": "responses/gdeltproject-009.json"
+  },
+  {
+   "request": "GET https://api.gdeltproject.org/api/v2/doc/doc?enddatetime=20231201000000&format=json&maxrecords=250&mode=artlist&query=%28%22mixer+grinder%22+OR+%22air+fryer%22+OR+%22induction+cooktop%22+OR+%22kitchen+appliances%22%29+sourcecountry%3AIN&sort=datedesc&startdatetime=20231101000000",
+   "status": 200,
+   "file": "responses/gdeltproject-010.json"
+  },
+  {
+   "request": "GET https://archive-api.open-meteo.com/v1/archive?daily=temperature_2m_max%2Cprecipitation_sum&end_date=2023-11-30&latitude=28.6139&longitude=77.209&start_date=2023-11-16&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-011.json"
+  },
+  {
+   "request": "GET https://archive-api.open-meteo.com/v1/archive?daily=temperature_2m_max%2Cprecipitation_sum&end_date=2023-11-30&latitude=13.0827&longitude=80.2707&start_date=2023-11-16&timezone=Asia%2FKolkata",
+   "status": 200,
+   "file": "responses/open-meteo-012.json"
+  },
+  {
+   "request": "GET https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Evaporative_cooler/daily/2023112300/2023113000",
+   "status": 200,
+   "file": "responses/wikimedia-013.json"
+  },
+  {
+   "request": "GET https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Diwali/daily/2023112300/2023113000",
+   "status": 200,
+   "file": "responses/wikimedia-014.json"
+  }
+ ]
+}

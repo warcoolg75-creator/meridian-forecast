@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "about": "External market signals: context shown beside our sales, never a forecasting input (the sales data is synthetic). Synced into signal_sources, signal_series and signal_mappings by make signals-backfill and make signals-refresh.",
+  "sources": [
+    {
+      "code": "open_meteo",
+      "name": "Open-Meteo",
+      "homepage": "https://open-meteo.com/",
+      "licence": "CC BY 4.0. The free API is for non-commercial use only; commercial use needs a paid plan.",
+      "attribution": "Weather data by Open-Meteo.com (ERA5 reanalysis from the Copernicus Climate Change Service, ECMWF forecasts), CC BY 4.0.",
+      "terms_url": "https://open-meteo.com/en/terms",
+      "requires_key": false,
+      "http": {"min_interval_seconds": 1.0, "max_attempts": 5, "backoff_seconds": 2.0, "cooldown_429_seconds": 60.0, "max_wait_seconds": 300.0, "timeout_seconds": 60.0}
+    },
+    {
+      "code": "fred",
+      "name": "FRED, Federal Reserve Bank of St. Louis",
+      "homepage": "https://fred.stlouisfed.org/",
+      "licence": "FRED API Terms of Use. EIA and Federal Reserve series are public domain (citation requested); the IMF commodity series are copyrighted: reuse with attribution, commercial reuse needs IMF permission.",
+      "attribution": "This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+      "terms_url": "https://fred.stlouisfed.org/docs/api/terms_of_use.html",
+      "requires_key": true,
+      "http": {"min_interval_seconds": 0.6, "max_attempts": 5, "backoff_seconds": 2.0, "cooldown_429_seconds": 60.0, "max_wait_seconds": 300.0, "timeout_seconds": 30.0}
+    },
+    {
+      "code": "wikimedia",
+      "name": "Wikimedia Analytics API (Wikipedia pageviews)",
+      "homepage": "https://wikitech.wikimedia.org/wiki/Analytics/AQS/Pageviews",
+      "licence": "CC0 1.0 (public domain dedication).",
+      "attribution": "Pageviews of English Wikipedia articles from the Wikimedia Analytics API, CC0.",
+      "terms_url": "https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/documentation/access-policy.html",
+      "requires_key": false,
+      "http": {"min_interval_seconds": 0.5, "max_attempts": 5, "backoff_seconds": 2.0, "cooldown_429_seconds": 60.0, "max_wait_seconds": 300.0, "timeout_seconds": 30.0}
+    },
+    {
+      "code": "gdelt",
+      "name": "The GDELT Project (DOC 2.0 API)",
+      "homepage": "https://www.gdeltproject.org/",
+      "licence": "Unlimited and unrestricted use, including commercial; any use must cite the GDELT Project with a link.",
+      "attribution": "News metadata from the GDELT Project (gdeltproject.org). Headlines and links only; articles belong to their publishers.",
+      "terms_url": "https://www.gdeltproject.org/about.html",
+      "requires_key": false,
+      "http": {"min_interval_seconds": 60.0, "max_attempts": 2, "backoff_seconds": 60.0, "cooldown_429_seconds": 600.0, "max_wait_seconds": 900.0, "timeout_seconds": 90.0}
+    }
+  ],
+  "weather": {
+    "source": "open_meteo",
+    "archive_url": "https://archive-api.open-meteo.com/v1/archive",
+    "forecast_url": "https://api.open-meteo.com/v1/forecast",
+    "timezone": "Asia/Kolkata",
+    "revision_days": 14,
+    "forecast_days": 16,
+    "variables": [
+      {"variable": "temperature_2m_max", "key": "tmax", "label": "Maximum temperature", "description": "Daily maximum air temperature at 2 m in {city}", "unit": "°C", "aggregation": "mean", "group_key": "temperature_max", "stale_after_days": 3},
+      {"variable": "precipitation_sum", "key": "rain", "label": "Rainfall", "description": "Daily rainfall (precipitation sum) in {city}", "unit": "mm", "aggregation": "sum", "group_key": "rainfall", "stale_after_days": 3}
+    ],
+    "cities": [
+      {"region": "IN-MH-MUM", "name": "Mumbai", "latitude": 19.076, "longitude": 72.8777},
+      {"region": "IN-MH-PUN", "name": "Pune", "latitude": 18.5204, "longitude": 73.8567},
+      {"region": "IN-GJ-AMD", "name": "Ahmedabad", "latitude": 23.0225, "longitude": 72.5714},
+      {"region": "IN-DL-NDL", "name": "New Delhi", "latitude": 28.6139, "longitude": 77.209},
+      {"region": "IN-KA-BLR", "name": "Bengaluru", "latitude": 12.9716, "longitude": 77.5946},
+      {"region": "IN-TN-CHE", "name": "Chennai", "latitude": 13.0827, "longitude": 80.2707},
+      {"region": "IN-TG-HYD", "name": "Hyderabad", "latitude": 17.385, "longitude": 78.4867},
+      {"region": "IN-WB-KOL", "name": "Kolkata", "latitude": 22.5726, "longitude": 88.3639},
+      {"region": "IN-KL-KOC", "name": "Kochi", "latitude": 9.9312, "longitude": 76.2673}
+    ]
+  },
+  "fred": {
+    "source": "fred",
+    "url": "https://api.stlouisfed.org/fred/series/observations",
+    "revision_days": 120
+  },
+  "wikimedia": {
+    "source": "wikimedia",
+    "url": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user",
+    "revision_days": 7
+  },
+  "series": [
+    {"key": "fred.PCOPPUSDM", "source": "fred", "external_id": "PCOPPUSDM", "label": "Copper price", "description": "Global price of copper, monthly average (IMF Primary Commodity Prices)", "unit": "US$ per tonne", "geography": "WORLD", "geography_name": "World", "frequency": "monthly", "aggregation": "mean", "role": "input_cost", "group_key": "copper", "stale_after_days": 35, "citation": "Source: International Monetary Fund, Global price of Copper [PCOPPUSDM], retrieved from FRED, Federal Reserve Bank of St. Louis. Copyright IMF, reprinted with permission."},
+    {"key": "fred.PALUMUSDM", "source": "fred", "external_id": "PALUMUSDM", "label": "Aluminium price", "description": "Global price of aluminium, monthly average (IMF Primary Commodity Prices)", "unit": "US$ per tonne", "geography": "WORLD", "geography_name": "World", "frequency": "monthly", "aggregation": "mean", "role": "input_cost", "group_key": "aluminium", "stale_after_days": 35, "citation": "Source: International Monetary Fund, Global price of Aluminum [PALUMUSDM], retrieved from FRED, Federal Reserve Bank of St. Louis. Copyright IMF, reprinted with permission."},
+    {"key": "fred.PSUGAISAUSDM", "source": "fred", "external_id": "PSUGAISAUSDM", "label": "Sugar price", "description": "Global price of raw sugar (No. 11, world), monthly average (IMF Primary Commodity Prices)", "unit": "US cents per pound", "geography": "WORLD", "geography_name": "World", "frequency": "monthly", "aggregation": "mean", "role": "input_cost", "group_key": "sugar", "stale_after_days": 35, "citation": "Source: International Monetary Fund, Global price of Sugar, No. 11, World [PSUGAISAUSDM], retrieved from FRED, Federal Reserve Bank of St. Louis. Copyright IMF, reprinted with permission."},
+    {"key": "fred.DCOILBRENTEU", "source": "fred", "external_id": "DCOILBRENTEU", "label": "Brent crude oil price", "description": "Brent crude spot price, Europe, on trading days (US Energy Information Administration)", "unit": "US$ per barrel", "geography": "WORLD", "geography_name": "World", "frequency": "daily", "aggregation": "mean", "role": "input_cost", "group_key": "brent", "stale_after_days": 7, "citation": "Source: U.S. Energy Information Administration, Crude Oil Prices: Brent - Europe [DCOILBRENTEU], retrieved from FRED, Federal Reserve Bank of St. Louis. Public domain."},
+    {"key": "fred.DEXINUS", "source": "fred", "external_id": "DEXINUS", "label": "Rupees per US dollar", "description": "Indian rupees to one US dollar, noon buying rate in New York, on business days (Federal Reserve H.10)", "unit": "₹ per US$", "geography": "IN", "geography_name": "India", "frequency": "daily", "aggregation": "mean", "role": "input_cost", "group_key": "inr_usd", "stale_after_days": 7, "citation": "Source: Board of Governors of the Federal Reserve System (US), Indian Rupees to U.S. Dollar Spot Exchange Rate [DEXINUS], retrieved from FRED, Federal Reserve Bank of St. Louis. Public domain."},
+    {"key": "wiki.Evaporative_cooler", "source": "wikimedia", "external_id": "Evaporative_cooler", "label": "“Evaporative cooler” on Wikipedia", "description": "Daily views of the English Wikipedia article “Evaporative cooler”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Evaporative_cooler", "stale_after_days": 3},
+    {"key": "wiki.Ceiling_fan", "source": "wikimedia", "external_id": "Ceiling_fan", "label": "“Ceiling fan” on Wikipedia", "description": "Daily views of the English Wikipedia article “Ceiling fan”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Ceiling_fan", "stale_after_days": 3},
+    {"key": "wiki.Air_fryer", "source": "wikimedia", "external_id": "Air_fryer", "label": "“Air fryer” on Wikipedia", "description": "Daily views of the English Wikipedia article “Air fryer”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Air_fryer", "stale_after_days": 3},
+    {"key": "wiki.Induction_cooking", "source": "wikimedia", "external_id": "Induction_cooking", "label": "“Induction cooking” on Wikipedia", "description": "Daily views of the English Wikipedia article “Induction cooking”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Induction_cooking", "stale_after_days": 3},
+    {"key": "wiki.Diwali", "source": "wikimedia", "external_id": "Diwali", "label": "“Diwali” on Wikipedia", "description": "Daily views of the English Wikipedia article “Diwali”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Diwali", "stale_after_days": 3},
+    {"key": "wiki.Dried_fruit", "source": "wikimedia", "external_id": "Dried_fruit", "label": "“Dried fruit” on Wikipedia", "description": "Daily views of the English Wikipedia article “Dried fruit”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Dried_fruit", "stale_after_days": 3},
+    {"key": "wiki.Namkeen", "source": "wikimedia", "external_id": "Namkeen", "label": "“Namkeen” on Wikipedia", "description": "Daily views of the English Wikipedia article “Namkeen”, worldwide, by people (not bots)", "unit": "views per day", "geography": "WORLD", "geography_name": "Worldwide, English Wikipedia", "frequency": "daily", "aggregation": "sum", "role": "demand_context", "group_key": "wiki.Namkeen", "stale_after_days": 3}
+  ],
+  "news": {
+    "source": "gdelt",
+    "url": "https://api.gdeltproject.org/api/v2/doc/doc",
+    "source_country": "IN",
+    "max_records": 250,
+    "window_months": 3,
+    "backfill_days": 90,
+    "stale_after_days": 3,
+    "topics": [
+      {"category": "Kitchen Appliances", "query": "(\"mixer grinder\" OR \"air fryer\" OR \"induction cooktop\" OR \"kitchen appliances\")"},
+      {"category": "Cooling", "query": "(\"air cooler\" OR \"air coolers\" OR \"ceiling fan\" OR \"table fan\") -suicide -hanging -hanged", "note": "Reports of deaths by hanging from a ceiling fan are common in Indian news and are not market news: excluded."},
+      {"category": "Packaged Foods", "query": "(\"dry fruits\" OR mithai OR namkeen OR \"diwali sweets\")"},
+      {"category": "Industrial Components", "query": "(\"ball bearing\" OR \"induction motor\" OR \"submersible pump\" OR \"electric motors\")"}
+    ]
+  },
+  "mappings": [
+    {"category": "Cooling", "series": ["weather.tmax.*"], "reason": "Coolers and fans sell in the hot months; maximum temperature in each city we sell in."},
+    {"category": "Cooling", "series": ["weather.rain.*"], "reason": "Evaporative coolers stop working well once the monsoon makes the air humid; rainfall marks it."},
+    {"category": "Cooling", "series": ["wiki.Evaporative_cooler", "wiki.Ceiling_fan"], "reason": "Attention to the product types, as a rough proxy: worldwide English Wikipedia views, not Indian search."},
+    {"category": "Cooling", "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM"], "reason": "Copper in motor windings, aluminium in fan blades and housings."},
+    {"category": "Cooling", "series": ["fred.DCOILBRENTEU", "fred.DEXINUS"], "reason": "Oil drives freight and plastics; a weaker rupee raises the cost of imported components."},
+    {"category": "Kitchen Appliances", "series": ["wiki.Air_fryer", "wiki.Induction_cooking", "wiki.Diwali"], "reason": "Attention to the product types and to Diwali, when kitchen appliances are a common gift: worldwide English Wikipedia views, not Indian search."},
+    {"category": "Kitchen Appliances", "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM"], "reason": "Copper in motors and induction coils, aluminium in bodies and baskets."},
+    {"category": "Kitchen Appliances", "series": ["fred.DCOILBRENTEU", "fred.DEXINUS"], "reason": "Oil drives freight and plastics; a weaker rupee raises the cost of imported components."},
+    {"category": "Packaged Foods", "series": ["wiki.Diwali", "wiki.Dried_fruit"], "reason": "Festive gifting and dry fruit: worldwide English Wikipedia views, not Indian search."},
+    {"category": "Packaged Foods", "series": ["fred.PSUGAISAUSDM"], "reason": "Sugar is the main ingredient of mithai."},
+    {"category": "Packaged Foods", "series": ["fred.DCOILBRENTEU", "fred.DEXINUS"], "reason": "Oil drives freight and packaging; India imports most of its almonds, priced in dollars."},
+    {"category": "Industrial Components", "series": ["weather.rain.*"], "reason": "Submersible pumps sell ahead of the monsoon, when farmers irrigate; rainfall marks the season. Bearings and motors have no demand signal among these sources."},
+    {"category": "Industrial Components", "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM"], "reason": "Copper in motor and pump windings, aluminium in motor frames."},
+    {"category": "Industrial Components", "series": ["fred.DCOILBRENTEU", "fred.DEXINUS"], "reason": "Oil drives freight; the rupee moves both imported steel and our export prices."},
+
+    {"skus": ["COL-ACL-70"], "series": ["weather.tmax.IN-DL-NDL", "weather.tmax.IN-GJ-AMD", "weather.tmax.IN-TG-HYD"], "reason": "Maximum temperature in its three largest cities: air coolers sell in dry heat."},
+    {"skus": ["COL-ACL-70"], "series": ["weather.rain.IN-DL-NDL"], "reason": "The monsoon reaching New Delhi, its largest city, ends the cooler season."},
+    {"skus": ["COL-ACL-70"], "series": ["wiki.Evaporative_cooler"], "reason": "Attention to evaporative coolers: worldwide English Wikipedia views, not Indian search."},
+    {"skus": ["COL-CFN-1200"], "series": ["weather.tmax.IN-TN-CHE", "weather.tmax.IN-TG-HYD", "weather.tmax.IN-DL-NDL"], "reason": "Maximum temperature in three of its largest cities."},
+    {"skus": ["COL-CFN-1200"], "series": ["wiki.Ceiling_fan"], "reason": "Attention to ceiling fans: worldwide English Wikipedia views, not Indian search."},
+    {"skus": ["COL-TFN-400"], "series": ["weather.tmax.IN-WB-KOL", "weather.tmax.IN-TN-CHE", "weather.tmax.IN-DL-NDL"], "reason": "Maximum temperature in its three largest cities."},
+    {"skus": ["COL-ACL-70", "COL-CFN-1200", "COL-TFN-400"], "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM"], "reason": "Copper in the motor, aluminium in blades and housings."},
+    {"skus": ["KIT-MXG-750"], "series": ["wiki.Diwali"], "reason": "Mixer grinders are a common festive gift; Diwali views mark the season."},
+    {"skus": ["KIT-IND-2000"], "series": ["wiki.Induction_cooking"], "reason": "Attention to induction cooking: worldwide English Wikipedia views, not Indian search."},
+    {"skus": ["KIT-AFR-45"], "series": ["wiki.Air_fryer"], "reason": "Attention to air fryers: worldwide English Wikipedia views, not Indian search."},
+    {"skus": ["KIT-MXG-750", "KIT-IND-2000", "KIT-AFR-45"], "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM"], "reason": "Copper in the motor or induction coil, aluminium in the body."},
+    {"skus": ["FDS-GFB-1KG"], "series": ["wiki.Diwali", "wiki.Dried_fruit"], "reason": "Dry fruit gift boxes are a Diwali purchase."},
+    {"skus": ["FDS-GFB-1KG"], "series": ["fred.DEXINUS"], "reason": "India imports most of its almonds, priced in dollars."},
+    {"skus": ["FDS-SWT-500"], "series": ["wiki.Diwali"], "reason": "Mithai is bought for Diwali."},
+    {"skus": ["FDS-SWT-500"], "series": ["fred.PSUGAISAUSDM"], "reason": "Sugar is the main ingredient."},
+    {"skus": ["FDS-NMK-200"], "series": ["wiki.Namkeen", "wiki.Diwali"], "reason": "Attention to namkeen and to Diwali: worldwide English Wikipedia views, not Indian search."},
+    {"skus": ["FDS-NMK-200"], "series": ["fred.DCOILBRENTEU"], "reason": "Oil drives freight and packaging film."},
+    {"skus": ["IND-BRG-6205"], "series": ["fred.DCOILBRENTEU", "fred.DEXINUS"], "reason": "No demand signal among these sources. Oil drives freight; the rupee moves export prices (two export customers buy bearings)."},
+    {"skus": ["IND-MTR-1HP"], "series": ["fred.PCOPPUSDM", "fred.PALUMUSDM", "fred.DEXINUS"], "reason": "No demand signal among these sources. Copper windings, aluminium frame; the rupee moves export prices."},
+    {"skus": ["IND-PMP-05"], "series": ["weather.rain.IN-GJ-AMD", "weather.rain.IN-MH-PUN", "weather.rain.IN-TG-HYD"], "reason": "Rainfall in its three largest cities: submersible pumps sell ahead of the monsoon."},
+    {"skus": ["IND-PMP-05"], "series": ["fred.PCOPPUSDM"], "reason": "Copper in the motor windings."}
+  ]
+}

@@ -40,6 +40,7 @@ import {
   X_AXIS_LABEL,
 } from "./analytics/present";
 import { DEMAND_VARIABILITY_TIP } from "./forecast/Forecastability";
+import { MarketContextPanel } from "./market/MarketContextPanel";
 import { useAnalyticsView } from "./useAnalyticsView";
 
 const EVENT_TYPE: Record<ProductEvent["event_type"], string> = {
@@ -362,6 +363,8 @@ export default function ProductDetail() {
           </p>
         )}
       </section>
+
+      <MarketContextPanel sku={sku} />
     </PageScaffold>
   );
 }

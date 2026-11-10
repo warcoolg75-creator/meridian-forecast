@@ -3,7 +3,13 @@ import type { ReactNode } from "react";
 import { PLANNING_ROLES } from "../../auth/roles";
 import type { Role } from "../../auth/types";
 import { cn } from "../../lib/cn";
-import { DashboardIcon, ForecastIcon, PlanningIcon, ProductsIcon } from "../brand/icons";
+import {
+  DashboardIcon,
+  ForecastIcon,
+  MarketIcon,
+  PlanningIcon,
+  ProductsIcon,
+} from "../brand/icons";
 
 export interface NavItem {
   to: string;
@@ -18,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/app/dashboard", label: "Dashboard", icon: DashboardIcon },
   { to: "/app/products", label: "Products", icon: ProductsIcon },
   { to: "/app/forecast", label: "Forecast", icon: ForecastIcon },
+  { to: "/app/market", label: "Market", icon: MarketIcon },
   { to: "/app/planning", label: "Planning", icon: PlanningIcon, roles: PLANNING_ROLES },
 ];
 

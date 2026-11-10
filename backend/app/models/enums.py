@@ -55,3 +55,34 @@ class MetricWindow(StrEnum):
 class ShockScope(StrEnum):
     INCLUDED = "included"  # every target week
     EXCLUDED = "excluded"  # weeks with a supply shock (ground truth) left out
+
+
+class SignalFrequency(StrEnum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+
+
+class SignalAggregation(StrEnum):
+    """How a daily series becomes weekly or monthly: mean (temperature, prices) or sum (rain, views)."""
+
+    MEAN = "mean"
+    SUM = "sum"
+
+
+class SignalRole(StrEnum):
+    DEMAND_CONTEXT = "demand_context"  # shown beside sales as context; never a forecasting input
+    INPUT_COST = "input_cost"  # what our materials cost: for phase 9 planning, not demand
+
+
+class FetchMode(StrEnum):
+    BACKFILL = "backfill"
+    REFRESH = "refresh"
+
+
+class FetchStatus(StrEnum):
+    RUNNING = "running"
+    OK = "ok"
+    PARTIAL = "partial"  # some series or windows failed, the rest were stored
+    FAILED = "failed"
+    NOT_CONFIGURED = "not_configured"  # e.g. FRED without FRED_API_KEY: skipped, not an error

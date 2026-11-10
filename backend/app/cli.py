@@ -6,17 +6,25 @@
     python -m app.cli backtest [--seed 42]   score every model at 13 rolling origins; report
     python -m app.cli forecast [--seed 42]   train the champions on all history; write a run
     python -m app.cli backtest-forecasts      store the latest backtest's held-out champion forecasts (h 1-4)
+    python -m app.cli signals-backfill [--source CODE ...] [--news-from-start]
+                                         external signals from 2023-10-09, news the last 90 days (context only)
+    python -m app.cli signals-refresh  [--source CODE ...]   the same, incrementally
+    python -m app.cli signals-status                         row counts and gaps per series
+
+Every command masks secrets in what it prints, including an uncaught exception's
+traceback (app/signals/redact.py): the FRED key travels in request URLs.
 """
 
 import argparse
 import sys
 import time
+import traceback
 from datetime import date
 
 from alembic import command
 from alembic.config import Config
 
-from app.config import BACKEND_DIR
+from app.config import BACKEND_DIR, get_settings
 from app.db import get_engine, get_sessionmaker
 from app.seed.generate import format_report, generate
 from app.seed.ground_truth import DEFAULT_END_DATE, DEFAULT_SEED
@@ -143,6 +151,37 @@ def _backtest_forecasts(args: argparse.Namespace) -> int:
     return 0
 
 
+def _signals(mode: str):
+    def handler(args: argparse.Namespace) -> int:
+        from app.models import FetchMode, FetchStatus
+        from app.signals.pipeline import run_signals
+
+        upgrade_to_head()
+        started = time.perf_counter()
+        reports = run_signals(get_sessionmaker(), get_settings(), FetchMode(mode), only=args.source,
+                              progress=lambda msg: print(msg, flush=True), fail_fast=args.fail_fast,
+                              news_from_start=getattr(args, "news_from_start", False))
+        changed = sum(r.counts.changed for r in reports)
+        print(f"signals {mode}: {len(reports)} sources, {changed} rows inserted, updated or deleted; "
+              f"{time.perf_counter() - started:.0f}s")
+        bad = [r.source for r in reports if r.status in (FetchStatus.FAILED, FetchStatus.PARTIAL)]
+        if bad:
+            print(f"Not every source succeeded: {', '.join(bad)} (see make signals-status). The others were "
+                  "stored; the app shows the failed ones as stale.", file=sys.stderr)
+        return 1 if bad else 0
+    return handler
+
+
+def _signals_status(_args: argparse.Namespace) -> int:
+    from app.signals.catalog import load_catalog
+    from app.signals.status import format_status
+
+    upgrade_to_head()
+    with get_sessionmaker()() as session:
+        print(format_status(session, [t.category for t in load_catalog().file.news.topics]))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -182,10 +221,38 @@ def main(argv: list[str] | None = None) -> int:
     past.add_argument("--seed", type=int, default=DEFAULT_SEED)
     past.set_defaults(handler=_backtest_forecasts)
 
+    for mode, help_text in (("backfill", "Fetch every external signal from 2023-10-09, news from the last 90 days "
+                                         "(resumable)"),
+                            ("refresh", "Fetch what is new since the last run, plus each source's revision window")):
+        signals = commands.add_parser(f"signals-{mode}", help=help_text)
+        signals.add_argument("--source", action="append", choices=["open_meteo", "fred", "wikimedia", "gdelt"],
+                             help="Only this source (repeatable). Default: all four.")
+        signals.add_argument("--fail-fast", action="store_true",
+                             help="Stop at the first failure and raise it, instead of isolating each source")
+        if mode == "backfill":
+            signals.add_argument("--news-from-start", action="store_true",
+                                 help="News from 2023-10-09 too, not only the last 90 days: about 52 GDELT "
+                                      "requests at one a minute, enough to get an address blocked for hours")
+        signals.set_defaults(handler=_signals(mode))
+    status = commands.add_parser("signals-status", help="Row counts and gaps per signal series and news category")
+    status.set_defaults(handler=_signals_status)
+
     args = parser.parse_args(argv)
-    if hasattr(sys.stdout, "reconfigure"):  # a cp1252 console must not crash on a non-ASCII name
-        sys.stdout.reconfigure(errors="replace")
-    return args.handler(args)
+    for stream in (sys.stdout, sys.stderr):  # a cp1252 console must not crash on a non-ASCII name
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+    # Mask secrets in everything printed from here on, an uncaught traceback included.
+    from app.signals.redact import install_redaction, secret_values
+    guard = install_redaction(secret_values(get_settings()))
+    try:
+        return args.handler(args)
+    except Exception:  # printed masked, as the interpreter would print it, then exit 1
+        sys.stderr.write(guard.redact(traceback.format_exc()))
+        sys.stderr.flush()
+        return 1
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 
 if __name__ == "__main__":

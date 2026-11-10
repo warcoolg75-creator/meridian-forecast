@@ -23,6 +23,19 @@ class Settings(BaseSettings):
     access_token_minutes: int = 15
     refresh_token_days: int = 7
 
+    # Phase 6a, external market signals (context only, never a forecasting input).
+    # FRED_API_KEY: a free key from fredaccount.stlouisfed.org. Read from .env only and never
+    # printed: it travels in the request URL, so app/signals/redact.py masks it everywhere.
+    fred_api_key: str = ""
+    # Raw API responses, cached outside git. Empty = backend/.cache/signals (gitignored).
+    signals_cache_dir: str = ""
+    # Wikimedia asks every client to identify itself with a contact.
+    # A directory of recorded responses (app/signals/replay.py) served instead of the network.
+    signals_replay_dir: str = ""
+    signals_user_agent: str = (
+        "meridian-forecast/0.6 (https://github.com/warcoolg75-creator; non-commercial college project)"
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:
